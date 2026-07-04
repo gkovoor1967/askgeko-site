@@ -1,0 +1,48 @@
+---
+// Shared site header. Sits on a light (bone) section: the gold compass
+// mark on its light background, next to the firm wordmark. No page nav
+// yet — links get added as the pages are built.
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/" aria-label="Ask GeKo Advisory — home">
+      <!-- The original gold compass logo. Do not redraw. -->
+      <img class="brand-mark" src="/logo.jpg" alt="Ask GeKo Advisory compass logo" width="44" height="44" />
+      <span class="brand-word">Ask GeKo Advisory</span>
+    </a>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    background: var(--bone);
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    min-height: 72px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .brand-mark {
+    width: 44px;
+    height: 44px;
+    /* logo art has a white background; blend it into the bone section */
+    mix-blend-mode: multiply;
+  }
+
+  .brand-word {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    letter-spacing: 0.01em;
+    color: var(--ink);
+  }
+</style>

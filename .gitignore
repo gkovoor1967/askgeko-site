@@ -1,0 +1,19 @@
+# build output
+dist/
+# dependencies
+node_modules/
+# Astro cache
+.astro/
+# environment secrets — never commit the OpenRouter key
+.env
+.env.production
+.env.local
+.env.*.local
+# Netlify local
+.netlify/
+# logs
+*.log
+npm-debug.log*
+# OS / editor
+.DS_Store
+Thumbs.db

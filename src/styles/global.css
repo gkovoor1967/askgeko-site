@@ -1,0 +1,120 @@
+/* ============================================================
+   Ask GeKo Advisory — global styles
+   Brand tokens, fonts, and a light baseline. Keep it spare:
+   near-monochrome, gold as a thin accent only.
+   ============================================================ */
+
+/* --- Brand tokens (from CLAUDE.md) --- */
+:root {
+  /* Colour */
+  --ink: #15110C;        /* warm near-black, primary dark        */
+  --ink-2: #1F1A13;      /* raised dark surface                  */
+  --bone: #F4EFE6;       /* warm off-white, light sections       */
+  --bone-2: #ECE5D8;     /* secondary light surface              */
+  --gold: #C9A24B;       /* accent: hairlines, logo, small marks */
+  --gold-deep: #9A7B33;  /* gold text on light backgrounds       */
+  --mute-dark: #A99E89;  /* muted text on dark                   */
+  --mute-light: #6E665A; /* muted text on light                  */
+
+  /* Type families */
+  --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+  /* Layout */
+  --page-max: 1120px;   /* content column width  */
+  --page-pad: 1.5rem;   /* side padding on small screens */
+
+  color-scheme: light dark;
+}
+
+/* --- Reset-ish baseline --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--bone);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* one slow, quiet load animation — no bounce */
+  animation: page-fade 0.9s ease-out both;
+}
+
+/* Headlines use the elegant serif, large and sparingly. */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 1.12;
+  margin: 0 0 0.5em;
+}
+
+/* Eyebrows / section labels: sans, uppercase, wide tracking. */
+.eyebrow {
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-size: 0.72rem;
+  color: var(--gold-deep);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Content column helper. */
+.container {
+  width: 100%;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--page-pad);
+}
+
+/* A thin gold rule — the brand's signature separator. */
+.rule-gold {
+  border: 0;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.7;
+}
+
+/* --- Accessibility: visible focus, honour reduced motion --- */
+:focus-visible {
+  outline: 2px solid var(--gold-deep);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+@keyframes page-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

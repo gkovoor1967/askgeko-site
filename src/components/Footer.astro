@@ -1,0 +1,65 @@
+---
+// Shared site footer on every page: social links, contact email, copyright.
+// Per the content notes:
+//   - X:        https://x.com/askgeko
+//   - LinkedIn: George's personal profile (URL still to be supplied)
+//   - Instagram @askgeko exists but is DORMANT — do NOT link at launch.
+// Replace the LinkedIn href below once George sends the URL.
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <nav class="socials" aria-label="Social and contact links">
+      <a href="https://x.com/askgeko" target="_blank" rel="noopener">X</a>
+      <!-- TODO: replace with George's LinkedIn URL when supplied -->
+      <a href="#" data-todo="linkedin-url">LinkedIn</a>
+      <a href="mailto:george@askgeko.com">george@askgeko.com</a>
+    </nav>
+
+    <p class="legal">
+      © {year} Ask GeKo Advisory LLP · askgeko.com
+    </p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--ink);
+    color: var(--mute-dark);
+    border-top: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+    margin-top: auto; /* stick to the bottom when the page is short */
+  }
+
+  .footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 2rem;
+  }
+
+  .socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+  }
+
+  .socials a {
+    color: var(--bone);
+    transition: color 0.2s ease;
+  }
+
+  .socials a:hover {
+    color: var(--gold);
+  }
+
+  .legal {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--mute-dark);
+  }
+</style>
