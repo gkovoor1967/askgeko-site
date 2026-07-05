@@ -6,7 +6,17 @@
 // Copy is taken verbatim from askgeko-content.md:
 //   tagline         — "The Leadership Alchemists"
 //   positioning line — the hero sentence
+//
+// Below the hero sit two quiet sections: an Ask GeKo teaser and a featured
+// insight (the newest article), each a restrained invitation deeper into the
+// site — no embedded chat, no clutter.
 import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+// Newest article, sorted the same way as the Articles page.
+const latest = (await getCollection('articles')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+)[0];
 ---
 
 <Base>
@@ -34,6 +44,39 @@ import Base from '../layouts/Base.astro';
       </p>
     </div>
   </section>
+
+  <!-- Ask GeKo teaser — a quiet invitation, not the chat itself. -->
+  <section class="home-section ask-teaser">
+    <div class="container">
+      <p class="eyebrow">Ask GeKo</p>
+      <p class="teaser-line">Have a question worth a considered answer?</p>
+      <p class="teaser-support">
+        Put it to Ask GeKo — the firm's AI advisor — and think it through,
+        privately and without obligation.
+      </p>
+      <a class="gold-link" href="/ask">
+        Think it through with us
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Featured insight — the most recent article, linking into /articles. -->
+  {latest && (
+    <section class="home-section latest">
+      <div class="container">
+        <p class="eyebrow">Latest thinking</p>
+        <a class="latest-link" href="/articles">
+          <h2 class="latest-title">{latest.data.title}</h2>
+          <p class="latest-excerpt">{latest.data.excerpt}</p>
+          <span class="gold-link as-cue">
+            Read the latest thinking
+            <span class="arrow" aria-hidden="true">→</span>
+          </span>
+        </a>
+      </div>
+    </section>
+  )}
 </Base>
 
 <style>
@@ -125,6 +168,97 @@ import Base from '../layouts/Base.astro';
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  /* --- Quiet sections below the hero --- */
+  .home-section {
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+  }
+
+  /* Second section on the secondary warm surface + a thin gold hairline,
+     to separate it from the teaser without adding weight. */
+  .home-section.latest {
+    background: var(--bone-2);
+    border-top: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
+  }
+
+  /* Ask GeKo teaser */
+  .teaser-line {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3.6vw, 2.4rem);
+    line-height: 1.2;
+    color: var(--ink);
+    max-width: 24ch;
+    margin: 1rem 0 0;
+  }
+
+  .teaser-support {
+    max-width: 46ch;
+    color: var(--mute-light);
+    font-size: 1.05rem;
+    margin: 0.85rem 0 0;
+  }
+
+  /* Shared gold call-to-action link — understated, arrow nudges on hover. */
+  .gold-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--gold-deep);
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+    padding-bottom: 3px;
+  }
+
+  .arrow {
+    transition: transform 0.2s ease;
+  }
+
+  .gold-link:hover .arrow,
+  .gold-link:focus-visible .arrow,
+  .latest-link:hover .arrow,
+  .latest-link:focus-visible .arrow {
+    transform: translateX(4px);
+  }
+
+  /* Featured insight */
+  .latest-link {
+    display: block;
+    max-width: 68ch;
+  }
+
+  .latest-title {
+    font-size: clamp(1.5rem, 3.2vw, 2.1rem);
+    color: var(--ink);
+    margin: 1rem 0 0;
+    transition: color 0.2s ease;
+  }
+
+  .latest-excerpt {
+    color: var(--mute-light);
+    font-size: 1.05rem;
+    margin: 0.75rem 0 0;
+  }
+
+  /* When used as the cue inside the article link, the arrow still nudges but
+     the margin matches the block's rhythm. */
+  .as-cue {
+    margin-top: 1.25rem;
+  }
+
+  .latest-link:hover .latest-title,
+  .latest-link:focus-visible .latest-title {
+    color: var(--gold-deep);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .arrow {
+      transition: none;
     }
   }
 </style>
