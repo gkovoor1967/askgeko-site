@@ -1,25 +1,38 @@
 ---
-// Clients — a refined logo wall. Named clients only, no project details
-// (per permissions). Order verbatim from askgeko-content.md: lead with
-// Diageo. Arthur D. Little is deliberately excluded until the work is done —
-// do not add it back without George's word.
+// Clients — a single horizontal layer of client logos, organised into three
+// groups (Consumer · Private Equity · B2B & Technology) divided by thin gold
+// hairlines. Named clients only, no project details (per permissions). Order
+// verbatim from askgeko-content.md: Diageo leads. Arthur D. Little is
+// deliberately excluded until the work is done — do not add it back without
+// George's word.
 //
-// Each entry carries a logo, an industry eyebrow, and the client name. The
-// logo files have mixed backgrounds and resolutions, so every logo is seated
-// in an identical card and rendered greyscale (colour on hover) with a
-// `multiply` blend, which drops any white logo ground into the card and lets
-// the set read as one harmonious wall on the bone background.
-//
-// NOTE for George: the `sector` labels below are my best guess at each
-// client's industry — adjust any that aren't how you'd describe them.
+// Each logo has a mixed background/resolution, so every logo sits in an
+// identical fixed-height zone, multiply-blended (drops white grounds into the
+// card) and rendered greyscale, with colour restored on hover. On desktop all
+// five sit in one row; on mobile the three groups stack with their headers.
 import Base from '../layouts/Base.astro';
 
-const clients = [
-  { name: 'United Spirits Limited (Diageo)', sector: 'Consumer',       logo: '/diageo-india.png' },
-  { name: 'Apax',                            sector: 'Private Equity', logo: '/apax.png' },
-  { name: 'Beyond Snack',                    sector: 'Consumer',       logo: '/beyond-snack.png' },
-  { name: 'Canadian Crystalline',            sector: 'Industry',       logo: '/canadian-crystalline.png' },
-  { name: 'AlgoSynth',                       sector: 'Technology',     logo: '/algosynth.png' },
+const groups = [
+  {
+    header: 'Consumer',
+    clients: [
+      { name: 'United Spirits Limited (Diageo)', label: 'Alcobev',       logo: '/diageo-india.png' },
+      { name: 'Beyond Snack',                    label: 'FMCG Snacking',  logo: '/beyond-snack.png' },
+    ],
+  },
+  {
+    header: 'Private Equity',
+    clients: [
+      { name: 'Apax', label: '', logo: '/apax.png' },
+    ],
+  },
+  {
+    header: 'B2B & Technology',
+    clients: [
+      { name: 'Canadian Crystalline', label: 'Water & Beverage Equipment', logo: '/canadian-crystalline.png' },
+      { name: 'AlgoSynth',            label: 'Sweetener Technologies',      logo: '/algosynth.png' },
+    ],
+  },
 ];
 ---
 
@@ -34,20 +47,26 @@ const clients = [
         Trusted by leaders across consumer, private equity, and industry.
       </p>
 
-      <!-- Logo wall: identical cards so mixed logos sit harmoniously. -->
-      <ul class="wall">
-        {clients.map((client) => (
-          <li class="client">
-            <!-- Logo ground. Decorative — the client name is carried as real
-                 text below, so the image itself is hidden from assistive tech. -->
-            <div class="logo-row">
-              <img src={client.logo} alt="" aria-hidden="true" loading="lazy" />
+      <!-- One horizontal layer: three groups, gold hairlines between them. -->
+      <div class="groups">
+        {groups.map((group) => (
+          <section class="group">
+            <h2 class="group-header">{group.header}</h2>
+            <div class="group-cards">
+              {group.clients.map((client) => (
+                <div class="card">
+                  <!-- Logo is decorative; the client name is real text below. -->
+                  <div class="logo-row">
+                    <img src={client.logo} alt="" aria-hidden="true" loading="lazy" />
+                  </div>
+                  <p class="card-name">{client.name}</p>
+                  {client.label && <p class="card-label">{client.label}</p>}
+                </div>
+              ))}
             </div>
-            <p class="eyebrow sector">{client.sector}</p>
-            <p class="client-name">{client.name}</p>
-          </li>
+          </section>
         ))}
-      </ul>
+      </div>
     </div>
   </section>
 </Base>
@@ -66,74 +85,131 @@ const clients = [
     margin: 1rem 0 0;
   }
 
-  .wall {
-    list-style: none;
-    margin: clamp(2.5rem, 6vw, 4rem) 0 0;
-    padding: 0;
-    display: grid;
-    gap: clamp(1rem, 2.5vw, 1.5rem);
-    /* Cards flow and wrap; each stays at least ~220px wide. */
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  /* --- Groups layer ---
+     Mobile-first: the three groups stack vertically, split by gold hairlines.
+     On desktop they sit side by side in one row (see media query below). */
+  .groups {
+    display: flex;
+    flex-direction: column;
+    margin-top: clamp(2.5rem, 6vw, 4rem);
   }
 
-  /* --- Client card --- */
-  .client {
+  .group {
+    padding-block: clamp(1.75rem, 5vw, 2.25rem);
+  }
+
+  /* Hairline between groups: horizontal while stacked. */
+  .group + .group {
+    border-top: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+  }
+
+  .group-header {
+    font-family: var(--font-body);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    font-size: 0.68rem;
+    color: var(--gold-deep);
     text-align: center;
-    padding: clamp(1.5rem, 3vw, 2rem) 1.25rem;
-    /* A soft warm-white surface lifts the card just off the bone page. */
-    background: color-mix(in srgb, #fff 55%, var(--bone));
-    border: 1px solid color-mix(in srgb, var(--gold) 22%, transparent);
-    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    margin: 0 0 1.5rem;
   }
 
-  /* --- Logo --- */
+  /* Cards within a group. */
+  .group-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: start;
+    gap: clamp(1rem, 3vw, 1.75rem);
+  }
+
+  /* --- Card --- */
+  .card {
+    width: 150px;
+    text-align: center;
+  }
+
   .logo-row {
-    height: 72px;
+    height: 52px;
     display: grid;
     place-items: center;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.9rem;
   }
 
   .logo-row img {
     max-height: 100%;
-    max-width: 160px;
+    max-width: 130px;
     width: auto;
     object-fit: contain;
-    /* Unify mixed logos: white grounds drop away (multiply), colour is muted
-       to a quiet greyscale until hover. */
+    /* Unify mixed logos: white grounds drop away (multiply), colour muted to
+       greyscale until hover. */
     mix-blend-mode: multiply;
     filter: grayscale(1);
     opacity: 0.72;
     transition: filter 0.3s ease, opacity 0.3s ease;
   }
 
-  /* Colour restored on hover/focus — a small, premium reveal. */
-  .client:hover .logo-row img,
-  .client:focus-within .logo-row img {
+  .card:hover .logo-row img,
+  .card:focus-within .logo-row img {
     filter: grayscale(0);
     opacity: 1;
   }
 
-  .client:hover {
-    border-color: color-mix(in srgb, var(--gold) 55%, transparent);
-    box-shadow: 0 14px 34px rgba(21, 17, 12, 0.08);
-  }
-
-  /* --- Text --- */
-  .sector {
-    margin: 0 0 0.35rem;
-  }
-
-  .client-name {
+  .card-name {
     font-family: var(--font-display);
-    font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+    font-size: 1.02rem;
     line-height: 1.2;
     color: var(--ink);
     margin: 0;
   }
 
-  /* If a viewer prefers reduced motion, the colour is simply present — no
-     dependence on a hover transition to reveal it. */
+  .card-label {
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.6rem;
+    color: var(--mute-light);
+    margin: 0.4rem 0 0;
+  }
+
+  /* --- Desktop: one horizontal row, vertical gold hairlines between groups. */
+  @media (min-width: 880px) {
+    .groups {
+      flex-direction: row;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+    .group {
+      padding-block: 0;
+      padding-inline: clamp(1rem, 2.5vw, 2rem);
+    }
+
+    .group:first-child {
+      padding-left: 0;
+    }
+
+    .group:last-child {
+      padding-right: 0;
+    }
+
+    /* Hairline becomes vertical between the side-by-side groups. */
+    .group + .group {
+      border-top: none;
+      border-left: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+    }
+
+    .group-cards {
+      flex-wrap: nowrap;
+    }
+
+    /* Slightly smaller, viewport-aware cards so all five fit one row. */
+    .card {
+      width: clamp(118px, 11vw, 150px);
+    }
+  }
+
+  /* Reduced motion: colour is simply present, not revealed by a transition. */
   @media (prefers-reduced-motion: reduce) {
     .logo-row img {
       filter: grayscale(0);
