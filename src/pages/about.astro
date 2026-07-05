@@ -57,7 +57,7 @@ import Base from '../layouts/Base.astro';
       <ul class="points">
         <li>
           <h2>Partner-led and hands-on.</h2>
-          <p>Never delegated down.</p>
+          <p>Every engagement is led by a partner, start to finish.</p>
         </li>
         <li>
           <h2>AI-native.</h2>
@@ -168,9 +168,12 @@ import Base from '../layouts/Base.astro';
   }
 
   .points h2 {
-    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    /* Sized so the longest heading ("Partner-led and hands-on.") sits on a
+       single line across the three columns on desktop. */
+    font-size: clamp(1.3rem, 2.4vw, 1.6rem);
     color: var(--bone);
     margin: 0 0 0.15em;
+    text-wrap: balance;
   }
 
   .points p {
@@ -179,14 +182,24 @@ import Base from '../layouts/Base.astro';
     font-size: 1.02rem;
   }
 
-  /* On wider screens, lay the three points side by side. */
+  /* On wider screens, lay the three points side by side. Top-align the
+     columns (align-items: start) so the three headings sit on one line and
+     the block reads as an even, symmetric row. Subgrid lets each column share
+     the same heading and supporting-line rows, so if a heading ever wraps the
+     supporting lines still align across all three. */
   @media (min-width: 760px) {
     .points {
       grid-template-columns: repeat(3, 1fr);
-      gap: 2rem;
+      grid-template-rows: auto auto;
+      column-gap: 2rem;
+      row-gap: 0;
+      align-items: start;
     }
 
     .points li {
+      grid-row: span 2;
+      display: grid;
+      grid-template-rows: subgrid;
       border-top: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
       border-bottom: none;
     }
