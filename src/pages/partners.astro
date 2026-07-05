@@ -12,7 +12,7 @@ const partners = [
     role: 'Founding Partner',
     photo: '/george-photo.jpg',
     email: 'george@askgeko.com',
-    linkedin: '', // TODO: paste George's LinkedIn URL
+    linkedin: 'https://www.linkedin.com/in/george-kovoor',
     bio:
       "George has spent 34 years building multi-billion-dollar businesses " +
       "across India, China, APAC, and PepsiCo's global headquarters in New " +
@@ -37,7 +37,7 @@ const partners = [
     role: 'Partner — Social Media Strategy & Office Administration',
     photo: '/neena-photo.jpg',
     email: 'neena@askgeko.com',
-    linkedin: '', // TODO: paste Neena's LinkedIn URL
+    linkedin: '', // no profile yet — the card omits the LinkedIn link
     bio:
       "Neena Kovoor is a Partner at Ask GeKo Advisory LLP, where she leads " +
       "Social Media Strategy and Office Administration. An English Literature " +
@@ -85,10 +85,8 @@ const partners = [
 
               <p class="partner-links">
                 <a href={`mailto:${p.email}`}>{p.email}</a>
-                {p.linkedin ? (
+                {p.linkedin && (
                   <a href={p.linkedin} target="_blank" rel="noopener">LinkedIn</a>
-                ) : (
-                  <a href="#" data-todo="linkedin-url">LinkedIn</a>
                 )}
               </p>
             </div>
