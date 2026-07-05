@@ -1,0 +1,166 @@
+---
+// Articles — a list built from the Markdown files in src/content/articles/.
+// Each entry = title, date, short excerpt, and a link out to LinkedIn
+// (per CLAUDE.md, page 5). George adds a new piece simply by dropping another
+// Markdown file into that folder; this page picks it up automatically.
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+// Pull every entry and show the newest first.
+const entries = (await getCollection('articles')).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
+);
+
+// Long-form, human-readable date (e.g. "2 July 2026").
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+---
+
+<Base
+  title="Articles — Ask GeKo Advisory"
+  description="Writing and talks by George Kovoor on leadership, growth, AI, and transformation."
+>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Articles</p>
+      <h1 class="page-title">Notes on leadership, growth &amp; AI.</h1>
+
+      <ul class="list">
+        {entries.map((entry) => (
+          <li class="entry">
+            <a
+              class="entry-link"
+              href={entry.data.linkedin}
+              target="_blank"
+              rel="noopener"
+            >
+              <div class="entry-meta">
+                <time datetime={entry.data.date.toISOString().slice(0, 10)}>
+                  {fmt(entry.data.date)}
+                </time>
+                {entry.data.type === 'mention' && (
+                  <span class="tag">In the press{entry.data.source ? ` · ${entry.data.source}` : ''}</span>
+                )}
+              </div>
+
+              <h2 class="entry-title">{entry.data.title}</h2>
+              <p class="entry-excerpt">{entry.data.excerpt}</p>
+
+              <span class="entry-cue">
+                {entry.data.type === 'mention' ? 'View coverage on LinkedIn' : 'Read on LinkedIn'}
+                <span aria-hidden="true" class="arrow">→</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .section {
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+  }
+
+  .page-title {
+    font-size: clamp(1.9rem, 4.5vw, 3rem);
+    color: var(--ink);
+    margin: 0.75rem 0 0;
+  }
+
+  .list {
+    list-style: none;
+    margin: clamp(2.5rem, 6vw, 4rem) 0 0;
+    padding: 0;
+  }
+
+  /* Each entry is separated by the brand's thin gold hairline. */
+  .entry + .entry {
+    border-top: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+  }
+
+  /* The whole entry is one large, quiet click target. */
+  .entry-link {
+    display: block;
+    padding-block: clamp(1.75rem, 4vw, 2.5rem);
+    transition: opacity 0.2s ease;
+  }
+
+  .entry-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+  }
+
+  .entry-meta time {
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.68rem;
+    color: var(--mute-light);
+  }
+
+  /* Small gold-hairline tag marking external coverage (not George's own post). */
+  .tag {
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.6rem;
+    color: var(--gold-deep);
+    border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+    border-radius: 2px;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .entry-title {
+    font-size: clamp(1.5rem, 3.2vw, 2.1rem);
+    color: var(--ink);
+    margin: 0.85rem 0 0;
+    transition: color 0.2s ease;
+  }
+
+  .entry-excerpt {
+    max-width: 68ch;
+    color: var(--mute-light);
+    font-size: 1.05rem;
+    margin: 0.75rem 0 0;
+  }
+
+  /* "Read on LinkedIn →" cue, understated until hover. */
+  .entry-cue {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--gold-deep);
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+    padding-bottom: 3px;
+  }
+
+  .arrow {
+    transition: transform 0.2s ease;
+  }
+
+  /* Hover/focus: title warms to gold, arrow nudges right. */
+  .entry-link:hover .entry-title,
+  .entry-link:focus-visible .entry-title {
+    color: var(--gold-deep);
+  }
+
+  .entry-link:hover .arrow,
+  .entry-link:focus-visible .arrow {
+    transform: translateX(4px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .arrow {
+      transition: none;
+    }
+  }
+</style>
