@@ -1,0 +1,153 @@
+---
+// About — "Who we are" (a bold serif lede + two short paragraphs) and
+// "Why work with us" (three short points). Copy is verbatim from
+// askgeko-content.md; keep the text spare — a premium layout wants little.
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="About — Ask GeKo Advisory"
+  description="The Leadership Alchemists — a boutique advisory for leaders facing their most consequential decisions."
+>
+  <!-- Who we are: light section, lots of air. -->
+  <section class="section who">
+    <div class="container">
+      <p class="eyebrow">Who we are</p>
+
+      <!-- Bold serif lede — one sentence, set large. -->
+      <p class="lede">
+        The Leadership Alchemists — a boutique advisory for leaders facing
+        their most consequential decisions.
+      </p>
+
+      <div class="prose">
+        <p>
+          Ask GeKo Advisory works alongside founders, boards, and executive
+          teams at the turning points that define an organisation — the
+          strategy that must be reset, the transition that must go right, the
+          decision that cannot be undone. Alchemy is our word for what happens
+          there: hard problems, worked with rigour and care, transformed into
+          outcomes that endure.
+        </p>
+        <p>
+          We are deliberately small, and deliberately hands-on. Every
+          engagement is led by a partner, AI runs through how we think and how
+          we work, and we measure ourselves not by the weight of the deck but
+          by the outcomes it sets in motion.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why work with us: three points on a raised dark surface. -->
+  <section class="section why">
+    <div class="container">
+      <p class="eyebrow eyebrow-dark">Why work with us</p>
+
+      <ul class="points">
+        <li>
+          <h2>Partner-led and hands-on.</h2>
+          <p>Never delegated down.</p>
+        </li>
+        <li>
+          <h2>AI-native.</h2>
+          <p>It is part of who we are and how we work — and what we advise on.</p>
+        </li>
+        <li>
+          <h2>Outcome-linked.</h2>
+          <p>We measure our work by the change it creates.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Shared vertical rhythm for page sections. */
+  .section {
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+  }
+
+  /* --- Who we are (light) --- */
+  .who .lede {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(1.7rem, 4vw, 2.6rem);
+    line-height: 1.2;
+    color: var(--ink);
+    max-width: 26ch;
+    margin: 1.25rem 0 2.5rem;
+  }
+
+  .prose {
+    max-width: 60ch;
+  }
+
+  .prose p {
+    color: var(--mute-light);
+    font-size: 1.05rem;
+    margin: 0 0 1.25rem;
+  }
+
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* --- Why work with us (dark) --- */
+  .why {
+    background: var(--ink-2);
+    color: var(--bone);
+  }
+
+  .eyebrow-dark {
+    /* On dark, use the brighter gold rather than the deep gold. */
+    color: var(--gold);
+  }
+
+  .points {
+    list-style: none;
+    margin: 2rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0;
+  }
+
+  /* Gold hairline separators between the three points. */
+  .points li {
+    padding-block: 1.75rem;
+    border-top: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+  }
+
+  .points li:last-child {
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+  }
+
+  .points h2 {
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    color: var(--bone);
+    margin: 0 0 0.15em;
+  }
+
+  .points p {
+    margin: 0;
+    color: var(--mute-dark);
+    font-size: 1.02rem;
+  }
+
+  /* On wider screens, lay the three points side by side. */
+  @media (min-width: 760px) {
+    .points {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+    }
+
+    .points li {
+      border-top: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+      border-bottom: none;
+    }
+
+    .points li:last-child {
+      border-bottom: none;
+    }
+  }
+</style>

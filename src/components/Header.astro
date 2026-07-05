@@ -1,7 +1,17 @@
 ---
 // Shared site header. Sits on a light (bone) section: the gold compass
-// mark on its light background, next to the firm wordmark. No page nav
-// yet — links get added as the pages are built.
+// mark on its light background, next to the firm wordmark, with page nav.
+// Nav links are added only for pages that exist; more join as they're built.
+
+// Mark the current page in the nav (and for screen readers). Astro gives us
+// the request path; normalise trailing slashes so "/about/" matches "/about".
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+
+const nav = [
+  { href: '/about', label: 'About' },
+  { href: '/partners', label: 'Partners' },
+  { href: '/clients', label: 'Clients' },
+];
 ---
 
 <header class="site-header">
@@ -11,6 +21,18 @@
       <img class="brand-mark" src="/logo.jpg" alt="Ask GeKo Advisory compass logo" width="44" height="44" />
       <span class="brand-word">Ask GeKo Advisory</span>
     </a>
+
+    <nav class="site-nav" aria-label="Primary">
+      {nav.map((item) => (
+        <a
+          href={item.href}
+          class:list={['nav-link', { current: path === item.href }]}
+          aria-current={path === item.href ? 'page' : undefined}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
   </div>
 </header>
 
@@ -23,7 +45,39 @@
   .header-inner {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.5rem;
     min-height: 72px;
+  }
+
+  /* --- Primary nav --- */
+  .site-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(1rem, 3vw, 2rem);
+  }
+
+  .nav-link {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--mute-light);
+    padding-bottom: 3px;
+    /* reserve space for the hover/current hairline so text doesn't shift */
+    border-bottom: 1px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--ink);
+  }
+
+  /* Current page: thin gold underline. */
+  .nav-link.current {
+    color: var(--ink);
+    border-bottom-color: var(--gold);
   }
 
   .brand {

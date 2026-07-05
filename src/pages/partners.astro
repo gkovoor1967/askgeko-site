@@ -1,0 +1,184 @@
+---
+// Partners — George Kovoor (Founding Partner) and Neena Kovoor (Partner).
+// Each: photo, short bio, email, LinkedIn. Copy from askgeko-content.md.
+//
+// TODO for George:
+//   1. Add photo files to /public:  george-photo.png  and  neena-photo.jpg
+//   2. Send Neena's bio facts — the text below is a clean placeholder, not
+//      her real bio (the content file's entry is a note-to-self, not copy).
+//   3. Paste real LinkedIn URLs where marked `data-todo` below.
+import Base from '../layouts/Base.astro';
+
+// One entry per partner keeps the markup tidy and easy to edit.
+const partners = [
+  {
+    name: 'George Kovoor',
+    role: 'Founding Partner',
+    photo: '/george-photo.png',
+    email: 'george@askgeko.com',
+    linkedin: '', // TODO: paste George's LinkedIn URL
+    bio:
+      "George has spent more than three decades building multi-billion-dollar " +
+      "businesses across emerging and developed markets — most recently leading " +
+      "PepsiCo's India beverage business from operating losses to 20%+ margins, " +
+      "after growing its China foods business fivefold and shaping its " +
+      "international foodservice strategy. A Harvard Business School AMP graduate " +
+      "and IICA-certified independent director, he now advises boards, investors, " +
+      "and founders — from Diageo India to Apax Private Equity — on growth, " +
+      "transformation, and governance, with AI woven through his practice.",
+  },
+  {
+    name: 'Neena Kovoor',
+    role: 'Partner',
+    photo: '/neena-photo.jpg',
+    email: 'neena@askgeko.com',
+    linkedin: '', // TODO: paste Neena's LinkedIn URL
+    // Placeholder until George sends the facts — kept short and neutral so it
+    // reads cleanly if published before the full bio lands.
+    bio: 'Full biography coming soon.',
+  },
+];
+---
+
+<Base
+  title="Partners — Ask GeKo Advisory"
+  description="George Kovoor and Neena Kovoor — the partners behind Ask GeKo Advisory."
+>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Partners</p>
+      <h1 class="page-title">Partner-led, every engagement.</h1>
+
+      <div class="partners">
+        {partners.map((p) => (
+          <article class="partner">
+            <!-- Photo frame: a thin gold hairline seats the portrait even
+                 before the image file is added to /public. -->
+            <div class="portrait">
+              <img
+                src={p.photo}
+                alt={`${p.name}, ${p.role} at Ask GeKo Advisory`}
+                width="320"
+                height="400"
+                loading="lazy"
+              />
+            </div>
+
+            <div class="partner-body">
+              <h2 class="partner-name">{p.name}</h2>
+              <p class="partner-role">{p.role}</p>
+              <hr class="rule-gold partner-rule" />
+              <p class="partner-bio">{p.bio}</p>
+
+              <p class="partner-links">
+                <a href={`mailto:${p.email}`}>{p.email}</a>
+                {p.linkedin ? (
+                  <a href={p.linkedin} target="_blank" rel="noopener">LinkedIn</a>
+                ) : (
+                  <a href="#" data-todo="linkedin-url">LinkedIn</a>
+                )}
+              </p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .section {
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+  }
+
+  .page-title {
+    font-size: clamp(1.9rem, 4.5vw, 3rem);
+    color: var(--ink);
+    margin: 0.75rem 0 0;
+  }
+
+  .partners {
+    margin-top: clamp(2.5rem, 6vw, 4rem);
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 4rem);
+  }
+
+  .partner {
+    display: grid;
+    gap: clamp(1.5rem, 4vw, 2.5rem);
+    align-items: start;
+  }
+
+  /* --- Portrait --- */
+  .portrait {
+    /* Warm secondary surface behind the photo, with a thin gold hairline —
+       looks intentional even if the image is still missing. */
+    background: var(--bone-2);
+    border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    max-width: 320px;
+  }
+
+  .portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* --- Text --- */
+  .partner-name {
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    color: var(--ink);
+    margin: 0;
+  }
+
+  .partner-role {
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    font-size: 0.72rem;
+    color: var(--gold-deep);
+    margin: 0.4rem 0 0;
+  }
+
+  .partner-rule {
+    width: 56px;
+    margin: 1.5rem 0;
+  }
+
+  .partner-bio {
+    max-width: 62ch;
+    color: var(--mute-light);
+    font-size: 1.05rem;
+    margin: 0;
+  }
+
+  .partner-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 1.75rem 0 0;
+    font-size: 0.9rem;
+    letter-spacing: 0.02em;
+  }
+
+  .partner-links a {
+    color: var(--ink);
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+    padding-bottom: 2px;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .partner-links a:hover {
+    color: var(--gold-deep);
+    border-color: var(--gold-deep);
+  }
+
+  /* On wider screens, portrait beside the text. */
+  @media (min-width: 720px) {
+    .partner {
+      grid-template-columns: 320px 1fr;
+    }
+  }
+</style>
