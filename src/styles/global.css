@@ -12,7 +12,7 @@
   --bone: #F4EFE6;       /* warm off-white, light sections       */
   --bone-2: #ECE5D8;     /* secondary light surface              */
   --gold: #C9A24B;       /* accent: hairlines, logo, small marks */
-  --gold-deep: #9A7B33;  /* gold text on light backgrounds       */
+  --gold-deep: #7D6124;  /* gold text on light bg (AA: 5.1:1 on bone) */
   --mute-dark: #A99E89;  /* muted text on dark                   */
   --mute-light: #6E665A; /* muted text on light                  */
 

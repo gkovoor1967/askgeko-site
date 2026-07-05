@@ -142,9 +142,10 @@ const groups = [
     margin-bottom: 1rem; /* clear gap before the name */
     background: #fff;
     border: 1px solid color-mix(in srgb, var(--gold) 20%, transparent);
-    display: grid;
-    place-items: center;
-    overflow: hidden; /* belt-and-braces: nothing escapes the tile */
+    /* NB: a plain block (not grid/flex) so the image's height:100% resolves
+       against this fixed-height box — grid centering defeated that and let
+       square logos fall back to auto height and crop. */
+    overflow: hidden;
     transition: border-color 0.25s ease, box-shadow 0.25s ease;
   }
 

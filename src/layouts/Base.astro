@@ -22,7 +22,22 @@ const {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
-    <link rel="icon" href="/logo.jpg" />
+    <link rel="canonical" href={Astro.url} />
+
+    <!-- Favicons generated from the gold compass logo. -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Social share (Open Graph + Twitter). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Ask GeKo Advisory" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL('/apple-touch-icon.png', Astro.site)} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
 
     <!-- Fonts: Cormorant Garamond (display) + Inter (body/UI), from Google Fonts. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

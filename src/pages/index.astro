@@ -22,16 +22,15 @@ const latest = (await getCollection('articles')).sort(
 <Base>
   <section class="hero">
     <div class="hero-inner">
-      <!-- Gold compass mark, seated on a light medallion so it reads
-           cleanly on the dark hero. Swap to a transparent PNG at step 8. -->
-      <div class="medallion">
-        <img
-          src="/logo.jpg"
-          alt="Ask GeKo Advisory compass logo"
-          width="132"
-          height="132"
-        />
-      </div>
+      <!-- Gold compass mark on a transparent ground, sitting directly on the
+           dark hero (white background removed from the source logo). -->
+      <img
+        class="hero-mark"
+        src="/logo-transparent.png"
+        alt="Ask GeKo Advisory — gold compass logo"
+        width="329"
+        height="348"
+      />
 
       <h1 class="wordmark">Ask GeKo Advisory</h1>
       <p class="tagline">The Leadership Alchemists</p>
@@ -104,26 +103,13 @@ const latest = (await getCollection('articles')).sort(
     animation: hero-rise 1.1s ease-out both;
   }
 
-  /* Logo medallion — a small white "coin" ringed with a gold hairline. */
-  .medallion {
-    width: clamp(104px, 14vw, 132px);
-    aspect-ratio: 1;
+  /* Compass mark, transparent PNG directly on the dark ground. A soft
+     drop-shadow lifts it without the old white "coin". */
+  .hero-mark {
+    width: clamp(120px, 16vw, 156px);
+    height: auto;
     margin: 0 auto 2rem;
-    border-radius: 50%;
-    background: #fff;
-    display: grid;
-    place-items: center;
-    /* thin gold ring + soft lift off the dark ground */
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--gold) 60%, transparent),
-      0 18px 48px rgba(0, 0, 0, 0.5);
-  }
-
-  .medallion img {
-    width: 78%;
-    height: 78%;
-    border-radius: 50%; /* clip the square corners to the compass circle */
-    object-fit: cover;
+    filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.55));
   }
 
   .wordmark {

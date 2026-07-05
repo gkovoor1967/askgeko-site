@@ -66,7 +66,8 @@ const nav = [
     text-transform: uppercase;
     letter-spacing: 0.18em;
     color: var(--mute-light);
-    padding-bottom: 3px;
+    /* vertical padding gives a comfortable (>=24px) touch target */
+    padding-block: 0.5rem;
     /* reserve space for the hover/current hairline so text doesn't shift */
     border-bottom: 1px solid transparent;
     transition: color 0.2s ease, border-color 0.2s ease;
