@@ -4,6 +4,15 @@
   command = "npm run build"
   publish = "dist"
 
+[build.environment]
+  # OPENROUTER_MODEL is a public model slug (e.g. google/gemini-2.5-flash), not
+  # a secret. Its value legitimately appears in the deployed function as the
+  # default model, which otherwise trips Netlify's secrets scanner and fails
+  # the build with exit code 2. Tell the scanner this one key is safe.
+  # OPENROUTER_API_KEY is deliberately NOT listed — it stays scanned, so a real
+  # leak of the key into the build output would still fail the deploy.
+  SECRETS_SCAN_OMIT_KEYS = "OPENROUTER_MODEL"
+
 [functions]
   # Serverless functions (the Ask GeKo assistant) live here.
   directory = "netlify/functions"
