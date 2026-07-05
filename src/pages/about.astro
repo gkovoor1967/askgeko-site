@@ -9,32 +9,42 @@ import Base from '../layouts/Base.astro';
   title="About — Ask GeKo Advisory"
   description="The Leadership Alchemists — a boutique advisory for leaders facing their most consequential decisions."
 >
-  <!-- Who we are: light section, lots of air. -->
+  <!-- Who we are: light section, lots of air. Text left, quiet compass
+       mark right — large and faint so it reads as brand, not decoration. -->
   <section class="section who">
-    <div class="container">
-      <p class="eyebrow">Who we are</p>
+    <div class="container who-grid">
+      <div class="who-text">
+        <p class="eyebrow">Who we are</p>
 
-      <!-- Bold serif lede — one sentence, set large. -->
-      <p class="lede">
-        The Leadership Alchemists — a boutique advisory for leaders facing
-        their most consequential decisions.
-      </p>
+        <!-- Bold serif lede — one sentence, set large. -->
+        <p class="lede">
+          The Leadership Alchemists — a boutique advisory for leaders facing
+          their most consequential decisions.
+        </p>
 
-      <div class="prose">
-        <p>
-          Ask GeKo Advisory works alongside founders, boards, and executive
-          teams at the turning points that define an organisation — the
-          strategy that must be reset, the transition that must go right, the
-          decision that cannot be undone. Alchemy is our word for what happens
-          there: hard problems, worked with rigour and care, transformed into
-          outcomes that endure.
-        </p>
-        <p>
-          We are deliberately small, and deliberately hands-on. Every
-          engagement is led by a partner, AI runs through how we think and how
-          we work, and we measure ourselves not by the weight of the deck but
-          by the outcomes it sets in motion.
-        </p>
+        <div class="prose">
+          <p>
+            Ask GeKo Advisory works alongside founders, boards, and executive
+            teams at the turning points that define an organisation — the
+            strategy that must be reset, the growth that must be rekindled, the
+            decision that cannot be undone. Alchemy is our word for what happens
+            there: hard problems, worked with rigour and care, transformed into
+            outcomes that endure.
+          </p>
+          <p>
+            We are deliberately small, and deliberately hands-on. Every
+            engagement is led by a partner, AI runs through how we think and how
+            we work, and we measure ourselves not by the weight of the deck but
+            by the outcomes it sets in motion.
+          </p>
+        </div>
+      </div>
+
+      <!-- Quiet brand mark. Decorative only, so hidden from assistive tech;
+           the white logo ground is blended into the bone section and dropped
+           to a low opacity so it whispers rather than decorates. -->
+      <div class="who-mark" aria-hidden="true">
+        <img src="/logo.jpg" alt="" width="360" height="360" />
       </div>
     </div>
   </section>
@@ -69,6 +79,41 @@ import Base from '../layouts/Base.astro';
   }
 
   /* --- Who we are (light) --- */
+  .who-grid {
+    display: grid;
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+
+  /* Text left, mark right once there's room for both. */
+  @media (min-width: 860px) {
+    .who-grid {
+      grid-template-columns: 1fr auto;
+    }
+  }
+
+  /* The quiet compass mark. Hidden on narrow screens where there's no room
+     for a second column — it's a grace note, never load-bearing. */
+  .who-mark {
+    display: none;
+    justify-self: end;
+  }
+
+  .who-mark img {
+    width: clamp(240px, 26vw, 360px);
+    height: auto;
+    /* Blend the logo's white ground into the bone section, then drop the
+       whole mark right back so it reads as a faint watermark. */
+    mix-blend-mode: multiply;
+    opacity: 0.12;
+  }
+
+  @media (min-width: 860px) {
+    .who-mark {
+      display: block;
+    }
+  }
+
   .who .lede {
     font-family: var(--font-display);
     font-weight: 500;

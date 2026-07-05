@@ -1,12 +1,8 @@
 ---
 // Partners — George Kovoor (Founding Partner) and Neena Kovoor (Partner).
-// Each: photo, short bio, email, LinkedIn. Copy from askgeko-content.md.
+// Each: photo, bio, email, LinkedIn.
 //
-// TODO for George:
-//   1. Add photo files to /public:  george-photo.png  and  neena-photo.jpg
-//   2. Send Neena's bio facts — the text below is a clean placeholder, not
-//      her real bio (the content file's entry is a note-to-self, not copy).
-//   3. Paste real LinkedIn URLs where marked `data-todo` below.
+// TODO for George: paste real LinkedIn URLs where marked `data-todo` below.
 import Base from '../layouts/Base.astro';
 
 // One entry per partner keeps the markup tidy and easy to edit.
@@ -18,24 +14,41 @@ const partners = [
     email: 'george@askgeko.com',
     linkedin: '', // TODO: paste George's LinkedIn URL
     bio:
-      "George has spent more than three decades building multi-billion-dollar " +
-      "businesses across emerging and developed markets — most recently leading " +
-      "PepsiCo's India beverage business from operating losses to 20%+ margins, " +
-      "after growing its China foods business fivefold and shaping its " +
-      "international foodservice strategy. A Harvard Business School AMP graduate " +
-      "and IICA-certified independent director, he now advises boards, investors, " +
+      "George has spent 34 years building multi-billion-dollar businesses " +
+      "across India, China, APAC, and PepsiCo's global headquarters in New " +
+      "York. Most recently, he led the turnaround of PepsiCo's India beverage " +
+      "business to sustained profitability, delivering share gains in 9 of 13 " +
+      "quarters and the category's strongest innovation performance in two " +
+      "decades with the brand Sting. Earlier, he was the architect of " +
+      "PepsiCo's China foods footprint, a foundation that has delivered " +
+      "fivefold growth since, and he crafted the company's first global Away " +
+      "From Home channel strategy, building enduring relationships with " +
+      "customers such as Disney, Yum Brands, Jubilant FoodWorks, Dubai Expo, " +
+      "and PVR Cinemas. His work has been recognised with multiple Don M. " +
+      "Kendall Business of the Year awards, PepsiCo's highest business honour, " +
+      "and a 2024 Cannes Lion Gold — the only Cannes Gold won by India's FMCG " +
+      "industry that year. A Harvard Business School AMP graduate and " +
+      "IICA-certified independent director, he now advises boards, investors, " +
       "and founders — from Diageo India to Apax Private Equity — on growth, " +
       "transformation, and governance, with AI woven through his practice.",
   },
   {
     name: 'Neena Kovoor',
-    role: 'Partner',
+    role: 'Partner — Social Media Strategy & Office Administration',
     photo: '/neena-photo.jpg',
     email: 'neena@askgeko.com',
     linkedin: '', // TODO: paste Neena's LinkedIn URL
-    // Placeholder until George sends the facts — kept short and neutral so it
-    // reads cleanly if published before the full bio lands.
-    bio: 'Full biography coming soon.',
+    bio:
+      "Neena Kovoor is a Partner at Ask GeKo Advisory LLP, where she leads " +
+      "Social Media Strategy and Office Administration. An English Literature " +
+      "(Hons) graduate of Lady Shri Ram College, Delhi University, she brings " +
+      "a literature graduate's eye for language and narrative to the firm's " +
+      "public voice. She oversees the firm's administration, operating " +
+      "expenses, and social media outreach, ensuring the practice runs with " +
+      "the same discipline it advises its clients to build. She is currently " +
+      "deepening her expertise in AI tools for content, communication, and " +
+      "business operations, in keeping with the firm's AI-forward approach to " +
+      "advisory work.",
   },
 ];
 ---
