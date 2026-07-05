@@ -19,8 +19,8 @@ const nav = [
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="/" aria-label="Ask GeKo Advisory — home">
-      <!-- The original gold compass logo. Do not redraw. -->
-      <img class="brand-mark" src="/logo.jpg" alt="Ask GeKo Advisory compass logo" width="44" height="44" />
+      <!-- Transparent compass mark — same brand mark used site-wide. -->
+      <img class="brand-mark" src="/logo-transparent.png" alt="Ask GeKo Advisory compass logo" width="44" height="44" />
       <span class="brand-word">Ask GeKo Advisory</span>
     </a>
 
@@ -92,8 +92,8 @@ const nav = [
   .brand-mark {
     width: 44px;
     height: 44px;
-    /* logo art has a white background; blend it into the bone section */
-    mix-blend-mode: multiply;
+    /* transparent PNG — sits cleanly on the bone bar, no blend needed */
+    object-fit: contain;
   }
 
   .brand-word {
