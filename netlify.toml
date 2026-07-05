@@ -1,0 +1,20 @@
+# Netlify configuration for Ask GeKo.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[functions]
+  # Serverless functions (the Ask GeKo assistant) live here.
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  # Bundle the editable system-prompt file so the function can read it in
+  # production (locally, `netlify dev` reads it straight from the project root).
+  included_files = ["askgeko-assistant.md"]
+
+# `netlify dev` runs the Astro dev server and proxies to it, while serving the
+# function at /api/ask. It also loads environment variables from a local .env.
+[dev]
+  command = "npm run dev"
+  framework = "astro"
+  targetPort = 4321

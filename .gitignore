@@ -4,11 +4,12 @@ dist/
 node_modules/
 # Astro cache
 .astro/
-# environment secrets — never commit the OpenRouter key
+# environment secrets — never commit the OpenRouter key.
+# Ignore every .env variant (.env, .env.local, .env.txt, ...) EXCEPT the
+# committed, key-less template.
 .env
-.env.production
-.env.local
-.env.*.local
+.env.*
+!.env.example
 # Netlify local
 .netlify/
 # logs

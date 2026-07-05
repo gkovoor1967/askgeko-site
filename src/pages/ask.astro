@@ -1,0 +1,304 @@
+---
+// Ask GeKo — the AI assistant page. A chat widget that POSTs the running
+// conversation to the Netlify Function at /api/ask, which relays it to
+// OpenRouter and returns a reply. No secrets here: the browser never sees the
+// API key or model — those live in the function's environment variables.
+//
+// Per the brand: the assistant's replies render in the serif (the firm
+// "speaking"); the visitor's messages render in the sans.
+import Base from '../layouts/Base.astro';
+
+// The opening greeting. Shown in the markup (so it reads even without JS) and
+// seeded into the conversation state so the model has context.
+const greeting =
+  "Hello — I'm Ask GeKo. Tell me what you're weighing: a strategy to reset, a " +
+  'transition to get right, a decision that cannot be undone. How can I help?';
+---
+
+<Base
+  title="Ask GeKo — the assistant"
+  description="Ask GeKo, the firm's AI advisor — think through a leadership or strategy question, or learn how we work."
+>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Ask GeKo</p>
+      <h1 class="page-title">Think it through with us.</h1>
+      <p class="intro">
+        A quiet place to test a leadership or strategy question, or to learn how
+        the firm works. For a real engagement, we'll point you to a partner.
+      </p>
+
+      <!-- Chat panel -->
+      <div class="chat">
+        <div
+          id="messages"
+          class="messages"
+          role="log"
+          aria-live="polite"
+          aria-label="Conversation with Ask GeKo"
+          data-greeting={greeting}
+        >
+          <!-- Opening message, also present for no-JS visitors. -->
+          <div class="msg assistant">{greeting}</div>
+        </div>
+
+        <form id="composer" class="composer">
+          <label class="sr-only" for="ask-input">Your message</label>
+          <textarea
+            id="ask-input"
+            rows="1"
+            placeholder="Ask about leadership, strategy, or how we work…"
+            autocomplete="off"
+          ></textarea>
+          <button id="send" type="submit">Send</button>
+        </form>
+      </div>
+
+      <!-- "Go further" path — a real conversation by email. -->
+      <p class="go-further">
+        Prefer a real conversation?
+        <a href="mailto:george@askgeko.com?subject=Ask%20GeKo%20enquiry">Write to george@askgeko.com</a>.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // --- Ask GeKo chat widget ---------------------------------------------
+  const form = document.getElementById('composer');
+  const input = document.getElementById('ask-input');
+  const log = document.getElementById('messages');
+  const sendBtn = document.getElementById('send');
+
+  // Conversation state. Seed with the greeting already shown in the markup so
+  // the model has context. The system prompt is added server-side only.
+  const messages = [{ role: 'assistant', content: log.dataset.greeting || '' }];
+
+  // Render a message and scroll it into view. Uses textContent (not innerHTML)
+  // so nothing a visitor or the model returns can inject markup.
+  function addMessage(cssRole, content) {
+    const el = document.createElement('div');
+    el.className = 'msg ' + cssRole;
+    el.textContent = content;
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+    return el;
+  }
+
+  let pending = false;
+
+  async function send(text) {
+    const trimmed = text.trim();
+    if (pending || !trimmed) return;
+
+    pending = true;
+    sendBtn.disabled = true;
+    input.disabled = true;
+
+    addMessage('user', trimmed);
+    messages.push({ role: 'user', content: trimmed });
+
+    const typing = addMessage('assistant typing', '…');
+
+    try {
+      const res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages }),
+      });
+      const data = await res.json().catch(() => ({}));
+      typing.remove();
+
+      if (!res.ok || !data.reply) {
+        addMessage(
+          'assistant',
+          data.error ||
+            "Sorry — I couldn't reach the assistant just now. Please try again, or email george@askgeko.com."
+        );
+      } else {
+        addMessage('assistant', data.reply);
+        messages.push({ role: 'assistant', content: data.reply });
+      }
+    } catch (err) {
+      typing.remove();
+      addMessage(
+        'assistant',
+        'Sorry — something went wrong reaching the assistant. Please try again, or email george@askgeko.com.'
+      );
+    } finally {
+      pending = false;
+      sendBtn.disabled = false;
+      input.disabled = false;
+      input.focus();
+    }
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = input.value;
+    input.value = '';
+    autoresize();
+    send(text);
+  });
+
+  // Enter sends; Shift+Enter inserts a newline.
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      form.requestSubmit();
+    }
+  });
+
+  // Gentle auto-resize of the textarea, up to a limit.
+  function autoresize() {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+  }
+  input.addEventListener('input', autoresize);
+</script>
+
+<style>
+  .section {
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+  }
+
+  .page-title {
+    font-size: clamp(1.9rem, 4.5vw, 3rem);
+    color: var(--ink);
+    margin: 0.75rem 0 0;
+  }
+
+  .intro {
+    max-width: 52ch;
+    color: var(--mute-light);
+    font-size: 1.05rem;
+    margin: 1rem 0 0;
+  }
+
+  /* --- Chat panel --- */
+  .chat {
+    margin-top: clamp(2rem, 5vw, 3rem);
+    max-width: 46rem;
+    border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+    background: color-mix(in srgb, #fff 45%, var(--bone));
+  }
+
+  .messages {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    min-height: 220px;
+    max-height: 52vh;
+    overflow-y: auto;
+  }
+
+  /* Shared message block. */
+  .msg {
+    max-width: 88%;
+    padding: 0.7rem 1rem;
+    line-height: 1.5;
+  }
+
+  /* Assistant = the firm speaking: serif, seated on a thin gold rule, left. */
+  .msg.assistant {
+    align-self: flex-start;
+    font-family: var(--font-display);
+    font-size: 1.18rem;
+    color: var(--ink);
+    border-left: 2px solid color-mix(in srgb, var(--gold) 70%, transparent);
+  }
+
+  .msg.typing {
+    color: var(--mute-light);
+    letter-spacing: 0.15em;
+  }
+
+  /* Visitor = sans, right-aligned, on a quiet warm surface. */
+  .msg.user {
+    align-self: flex-end;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    color: var(--ink);
+    background: var(--bone-2);
+    border-radius: 2px;
+    white-space: pre-wrap; /* preserve any newlines the visitor typed */
+  }
+
+  /* --- Composer --- */
+  .composer {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+    padding: 0.85rem;
+    border-top: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
+    background: color-mix(in srgb, #fff 30%, var(--bone));
+  }
+
+  .composer textarea {
+    flex: 1;
+    resize: none;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+    border-radius: 2px;
+    padding: 0.6rem 0.75rem;
+    max-height: 160px;
+  }
+
+  .composer textarea:focus-visible {
+    outline: 2px solid var(--gold-deep);
+    outline-offset: 1px;
+  }
+
+  .composer button {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--bone);
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    padding: 0.7rem 1.4rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .composer button:hover:not(:disabled) {
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .composer button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .go-further {
+    margin-top: 1.5rem;
+    font-size: 0.95rem;
+    color: var(--mute-light);
+  }
+
+  .go-further a {
+    color: var(--gold-deep);
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+    padding-bottom: 1px;
+  }
+
+  /* Visually-hidden label, still read by screen readers. */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>
