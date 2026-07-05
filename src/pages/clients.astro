@@ -55,8 +55,11 @@ const groups = [
             <div class="group-cards">
               {group.clients.map((client) => (
                 <div class="card">
-                  <!-- Logo is decorative; the client name is real text below. -->
-                  <div class="logo-row">
+                  <!-- Fixed-height white tile: every logo scaled to fit
+                       inside it, so mixed white backgrounds all read as one
+                       matched set and nothing overflows. Decorative — the
+                       client name is carried as real text below. -->
+                  <div class="logo-tile">
                     <img src={client.logo} alt="" aria-hidden="true" loading="lazy" />
                   </div>
                   <p class="card-name">{client.name}</p>
@@ -123,36 +126,52 @@ const groups = [
     gap: clamp(1rem, 3vw, 1.75rem);
   }
 
-  /* --- Card --- */
+  /* --- Card ---
+     Simple top-to-bottom flow, no positioning: tile, gap, name, label.
+     Identical structure in every card keeps all names on one baseline. */
   .card {
     width: 150px;
     text-align: center;
   }
 
-  .logo-row {
-    height: 52px;
+  /* The neutral tile every logo shares. A uniform white ground means the
+     logos' own white backgrounds blend in instead of showing as boxes. */
+  .logo-tile {
+    height: 80px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem; /* clear gap before the name */
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--gold) 20%, transparent);
     display: grid;
     place-items: center;
-    margin-bottom: 0.9rem;
+    overflow: hidden; /* belt-and-braces: nothing escapes the tile */
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
   }
 
-  .logo-row img {
+  /* Image is fully contained by the tile — capped on BOTH axes so it can
+     never overflow onto the text below, whatever its native size. */
+  .logo-tile img {
+    display: block;
+    max-width: 100%;
     max-height: 100%;
-    max-width: 130px;
     width: auto;
+    height: auto;
     object-fit: contain;
-    /* Unify mixed logos: white grounds drop away (multiply), colour muted to
-       greyscale until hover. */
-    mix-blend-mode: multiply;
+    /* Muted greyscale at rest; true colour on hover. */
     filter: grayscale(1);
-    opacity: 0.72;
+    opacity: 0.78;
     transition: filter 0.3s ease, opacity 0.3s ease;
   }
 
-  .card:hover .logo-row img,
-  .card:focus-within .logo-row img {
+  .card:hover .logo-tile img,
+  .card:focus-within .logo-tile img {
     filter: grayscale(0);
     opacity: 1;
+  }
+
+  .card:hover .logo-tile {
+    border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+    box-shadow: 0 10px 26px rgba(21, 17, 12, 0.08);
   }
 
   .card-name {
@@ -211,7 +230,7 @@ const groups = [
 
   /* Reduced motion: colour is simply present, not revealed by a transition. */
   @media (prefers-reduced-motion: reduce) {
-    .logo-row img {
+    .logo-tile img {
       filter: grayscale(0);
       opacity: 1;
     }
