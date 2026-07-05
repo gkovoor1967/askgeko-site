@@ -1,16 +1,25 @@
 ---
-// Clients — a refined name wall, gold hairline separators. Named clients
-// only, no project details (per permissions). Order and names verbatim from
-// askgeko-content.md: lead with Diageo. Arthur D. Little is deliberately
-// excluded until the work is done — do not add it back without George's word.
+// Clients — a refined logo wall. Named clients only, no project details
+// (per permissions). Order verbatim from askgeko-content.md: lead with
+// Diageo. Arthur D. Little is deliberately excluded until the work is done —
+// do not add it back without George's word.
+//
+// Each entry carries a logo, an industry eyebrow, and the client name. The
+// logo files have mixed backgrounds and resolutions, so every logo is seated
+// in an identical card and rendered greyscale (colour on hover) with a
+// `multiply` blend, which drops any white logo ground into the card and lets
+// the set read as one harmonious wall on the bone background.
+//
+// NOTE for George: the `sector` labels below are my best guess at each
+// client's industry — adjust any that aren't how you'd describe them.
 import Base from '../layouts/Base.astro';
 
 const clients = [
-  'United Spirits Limited (Diageo)',
-  'Apax',
-  'Beyond Snack',
-  'Canadian Crystalline',
-  'AlgoSynth',
+  { name: 'United Spirits Limited (Diageo)', sector: 'Consumer',       logo: '/diageo-india.png' },
+  { name: 'Apax',                            sector: 'Private Equity', logo: '/apax.png' },
+  { name: 'Beyond Snack',                    sector: 'Consumer',       logo: '/beyond-snack.png' },
+  { name: 'Canadian Crystalline',            sector: 'Industry',       logo: '/canadian-crystalline.png' },
+  { name: 'AlgoSynth',                       sector: 'Technology',     logo: '/algosynth.png' },
 ];
 ---
 
@@ -25,10 +34,18 @@ const clients = [
         Trusted by leaders across consumer, private equity, and industry.
       </p>
 
-      <!-- Name wall: each client on its own line, divided by gold hairlines. -->
+      <!-- Logo wall: identical cards so mixed logos sit harmoniously. -->
       <ul class="wall">
-        {clients.map((name) => (
-          <li>{name}</li>
+        {clients.map((client) => (
+          <li class="client">
+            <!-- Logo ground. Decorative — the client name is carried as real
+                 text below, so the image itself is hidden from assistive tech. -->
+            <div class="logo-row">
+              <img src={client.logo} alt="" aria-hidden="true" loading="lazy" />
+            </div>
+            <p class="eyebrow sector">{client.sector}</p>
+            <p class="client-name">{client.name}</p>
+          </li>
         ))}
       </ul>
     </div>
@@ -53,16 +70,74 @@ const clients = [
     list-style: none;
     margin: clamp(2.5rem, 6vw, 4rem) 0 0;
     padding: 0;
-    /* A gold hairline closes off the bottom of the wall. */
-    border-bottom: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
+    display: grid;
+    gap: clamp(1rem, 2.5vw, 1.5rem);
+    /* Cards flow and wrap; each stays at least ~220px wide. */
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 
-  .wall li {
+  /* --- Client card --- */
+  .client {
+    text-align: center;
+    padding: clamp(1.5rem, 3vw, 2rem) 1.25rem;
+    /* A soft warm-white surface lifts the card just off the bone page. */
+    background: color-mix(in srgb, #fff 55%, var(--bone));
+    border: 1px solid color-mix(in srgb, var(--gold) 22%, transparent);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  /* --- Logo --- */
+  .logo-row {
+    height: 72px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .logo-row img {
+    max-height: 100%;
+    max-width: 160px;
+    width: auto;
+    object-fit: contain;
+    /* Unify mixed logos: white grounds drop away (multiply), colour is muted
+       to a quiet greyscale until hover. */
+    mix-blend-mode: multiply;
+    filter: grayscale(1);
+    opacity: 0.72;
+    transition: filter 0.3s ease, opacity 0.3s ease;
+  }
+
+  /* Colour restored on hover/focus — a small, premium reveal. */
+  .client:hover .logo-row img,
+  .client:focus-within .logo-row img {
+    filter: grayscale(0);
+    opacity: 1;
+  }
+
+  .client:hover {
+    border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+    box-shadow: 0 14px 34px rgba(21, 17, 12, 0.08);
+  }
+
+  /* --- Text --- */
+  .sector {
+    margin: 0 0 0.35rem;
+  }
+
+  .client-name {
     font-family: var(--font-display);
-    font-size: clamp(1.5rem, 4vw, 2.4rem);
+    font-size: clamp(1.15rem, 2.2vw, 1.4rem);
+    line-height: 1.2;
     color: var(--ink);
-    padding-block: clamp(1.1rem, 3vw, 1.6rem);
-    /* Gold hairline separator above each name. */
-    border-top: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
+    margin: 0;
+  }
+
+  /* If a viewer prefers reduced motion, the colour is simply present — no
+     dependence on a hover transition to reveal it. */
+  @media (prefers-reduced-motion: reduce) {
+    .logo-row img {
+      filter: grayscale(0);
+      opacity: 1;
+    }
   }
 </style>
