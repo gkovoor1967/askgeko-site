@@ -54,11 +54,54 @@ const greeting =
         </form>
       </div>
 
-      <!-- "Go further" path — a real conversation by email. -->
-      <p class="go-further">
-        Prefer a real conversation?
-        <a href="mailto:george@askgeko.com?subject=Ask%20GeKo%20enquiry">Write to george@askgeko.com</a>.
-      </p>
+      <!-- "Go further" — hand off to a partner by leaving details.
+           This is a Netlify Form: at deploy time Netlify detects the form
+           from the built HTML (the data-netlify attribute + hidden form-name),
+           captures each submission, and emails it to george@askgeko.com once
+           an email notification is configured in the Netlify dashboard.
+           Progressive enhancement: the script below submits without leaving
+           the page; with JS off, the plain POST still works via Netlify's
+           own success page. -->
+      <section class="handoff-wrap" aria-labelledby="handoff-title">
+        <h2 id="handoff-title" class="handoff-title">Go further</h2>
+        <p class="handoff-intro">
+          Want real help on a specific decision? Leave your details and a
+          partner will follow up — or write to
+          <a href="mailto:george@askgeko.com?subject=Ask%20GeKo%20enquiry">george@askgeko.com</a>.
+        </p>
+
+        <form
+          name="go-further"
+          method="POST"
+          data-netlify="true"
+          netlify-honeypot="bot-field"
+          id="handoff"
+          class="handoff"
+        >
+          <!-- Netlify needs this hidden field to match the submission. -->
+          <input type="hidden" name="form-name" value="go-further" />
+          <!-- Honeypot: hidden from people, catches spam bots. -->
+          <p class="hp" aria-hidden="true">
+            <label>Leave this field empty <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
+          </p>
+
+          <div class="field">
+            <label for="hf-name">Name</label>
+            <input id="hf-name" name="name" type="text" required autocomplete="name" />
+          </div>
+          <div class="field">
+            <label for="hf-email">Email</label>
+            <input id="hf-email" name="email" type="email" required autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="hf-question">What would you like help with?</label>
+            <textarea id="hf-question" name="question" rows="3" required></textarea>
+          </div>
+
+          <button type="submit">Send to the team</button>
+          <p class="handoff-status" id="handoff-status" role="status" aria-live="polite"></p>
+        </form>
+      </section>
     </div>
   </section>
 </Base>
@@ -155,6 +198,39 @@ const greeting =
     input.style.height = Math.min(input.scrollHeight, 160) + 'px';
   }
   input.addEventListener('input', autoresize);
+
+  // --- "Go further" Netlify Form -----------------------------------------
+  // Submit via fetch so the visitor stays on the page. Netlify accepts the
+  // form-encoded POST (including form-name) at any site path. If JS fails,
+  // the plain form still submits to Netlify's default success page.
+  const handoff = document.getElementById('handoff');
+  const handoffStatus = document.getElementById('handoff-status');
+
+  handoff.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = handoff.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    handoffStatus.textContent = 'Sending…';
+
+    try {
+      const body = new URLSearchParams(new FormData(handoff)).toString();
+      const res = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+      });
+      if (res.ok) {
+        handoff.reset();
+        handoffStatus.textContent = "Thank you — we'll be in touch shortly.";
+      } else {
+        handoffStatus.textContent = 'Something went wrong. Please email george@askgeko.com.';
+        btn.disabled = false;
+      }
+    } catch (err) {
+      handoffStatus.textContent = 'Something went wrong. Please email george@askgeko.com.';
+      btn.disabled = false;
+    }
+  });
 </script>
 
 <style>
@@ -277,16 +353,106 @@ const greeting =
     cursor: default;
   }
 
-  .go-further {
-    margin-top: 1.5rem;
-    font-size: 0.95rem;
-    color: var(--mute-light);
+  /* --- "Go further" handoff form --- */
+  .handoff-wrap {
+    margin-top: clamp(2.5rem, 6vw, 4rem);
+    max-width: 46rem;
+    padding-top: clamp(2rem, 5vw, 3rem);
+    border-top: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
   }
 
-  .go-further a {
+  .handoff-title {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: var(--ink);
+    margin: 0;
+  }
+
+  .handoff-intro {
+    max-width: 52ch;
+    color: var(--mute-light);
+    font-size: 1rem;
+    margin: 0.5rem 0 1.75rem;
+  }
+
+  .handoff-intro a {
     color: var(--gold-deep);
     border-bottom: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
     padding-bottom: 1px;
+  }
+
+  /* Honeypot field — present in the DOM for bots, hidden from people. */
+  .hp {
+    display: none;
+  }
+
+  .handoff .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .handoff label {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--mute-light);
+  }
+
+  .handoff input,
+  .handoff textarea {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+    border-radius: 2px;
+    padding: 0.6rem 0.75rem;
+    width: 100%;
+  }
+
+  .handoff textarea {
+    resize: vertical;
+    min-height: 4.5rem;
+  }
+
+  .handoff input:focus-visible,
+  .handoff textarea:focus-visible {
+    outline: 2px solid var(--gold-deep);
+    outline-offset: 1px;
+  }
+
+  .handoff button {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--bone);
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    padding: 0.7rem 1.4rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .handoff button:hover:not(:disabled) {
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .handoff button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .handoff-status {
+    margin: 0.9rem 0 0;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    color: var(--gold-deep);
+    min-height: 1.3em;
   }
 
   /* Visually-hidden label, still read by screen readers. */
