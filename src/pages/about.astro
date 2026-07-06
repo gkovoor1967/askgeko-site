@@ -33,9 +33,9 @@ import Base from '../layouts/Base.astro';
           </p>
           <p>
             We are deliberately small, and deliberately hands-on. Every
-            engagement is led by a partner, AI runs through how we think and how
-            we work, and we measure ourselves not by the weight of the deck but
-            by the outcomes it sets in motion.
+            engagement is framed with a future-forward lens, AI runs through how
+            we think and how we work, and we measure ourselves not by the weight
+            of the deck but by the outcomes it sets in motion.
           </p>
         </div>
       </div>
@@ -56,8 +56,8 @@ import Base from '../layouts/Base.astro';
 
       <ul class="points">
         <li>
-          <h2>Partner-led and hands-on.</h2>
-          <p>Every engagement is led by a partner, start to finish.</p>
+          <h2>Future-forward.</h2>
+          <p>We build for 2030 — not tweak playbooks written for 2020.</p>
         </li>
         <li>
           <h2>AI-native.</h2>
@@ -151,15 +151,15 @@ import Base from '../layouts/Base.astro';
 
   .points {
     list-style: none;
-    margin: 2rem 0 0;
+    margin: clamp(2.5rem, 6vw, 3.5rem) 0 0;
     padding: 0;
-    display: grid;
-    gap: 0;
+    display: flex;
+    flex-direction: column;
   }
 
-  /* Gold hairline separators between the three points. */
+  /* A gold hairline caps each pillar. */
   .points li {
-    padding-block: 1.75rem;
+    padding-block: 2rem;
     border-top: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
   }
 
@@ -168,39 +168,37 @@ import Base from '../layouts/Base.astro';
   }
 
   .points h2 {
-    /* Sized so the longest heading ("Partner-led and hands-on.") sits on a
-       single line across the three columns on desktop. */
-    font-size: clamp(1.3rem, 2.4vw, 1.6rem);
+    /* Sized so the hyphenated headings ("Future-forward.", "Outcome-linked.")
+       sit on one line within the narrow columns. */
+    font-size: clamp(1.45rem, 2.5vw, 1.6rem);
     color: var(--bone);
-    margin: 0 0 0.15em;
-    text-wrap: balance;
+    margin: 0 0 1rem;
   }
 
   .points p {
     margin: 0;
+    max-width: 30ch;
     color: var(--mute-dark);
-    font-size: 1.02rem;
+    font-size: 1.05rem;
+    line-height: 1.6;
   }
 
-  /* On wider screens, lay the three points side by side. Top-align the
-     columns (align-items: start) so the three headings sit on one line and
-     the block reads as an even, symmetric row. Subgrid lets each column share
-     the same heading and supporting-line rows, so if a heading ever wraps the
-     supporting lines still align across all three. */
-  @media (min-width: 760px) {
+  /* Wider screens: three narrow "monuments", not a cramped row. Narrow
+     columns with generous gaps, top-aligned; real vertical depth between the
+     hairline cap and the heading, then supporting text left to run 2–3 lines. */
+  @media (min-width: 800px) {
     .points {
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: auto auto;
-      column-gap: 2rem;
-      row-gap: 0;
-      align-items: start;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+      column-gap: clamp(2.5rem, 6vw, 5rem);
+      row-gap: 2.5rem;
     }
 
     .points li {
-      grid-row: span 2;
-      display: grid;
-      grid-template-rows: subgrid;
-      border-top: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+      flex: 0 1 13rem;
+      padding-block: 3rem 0;
       border-bottom: none;
     }
 

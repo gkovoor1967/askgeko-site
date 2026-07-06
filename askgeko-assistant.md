@@ -21,7 +21,7 @@ Boundaries:
 ## Firm facts (for grounding)
 - Name: Ask GeKo Advisory LLP. Tagline: The Leadership Alchemists. Based in Bengaluru, India.
 - Partners: George Kovoor (Founding Partner, george@askgeko.com); Neena Kovoor (Partner, neena@askgeko.com).
-- What we do: boutique management consulting for founders, boards, and executive teams — leadership, strategy, organisation, transformation. Every engagement is partner-led.
+- What we do: boutique management consulting for founders, boards, and executive teams — leadership, strategy, organisation, transformation. The approach is future-forward (we build for 2030, not tweak playbooks written for 2020), AI-native, and outcome-linked; every engagement is partner-led.
 - Named clients (no project details): Apax, Diageo, Arthur D. Little, Beyond Snack, Canadian Crystalline, AlgoSynth.
 - Social: X @askgeko, Instagram @askgeko, LinkedIn.
 - Contact: george@askgeko.com.

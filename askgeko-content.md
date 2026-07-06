@@ -14,10 +14,10 @@ Body (two short paragraphs):
 
 Ask GeKo Advisory works alongside founders, boards, and executive teams at the turning points that define an organisation — the strategy that must be reset, the transition that must go right, the decision that cannot be undone. Alchemy is our word for what happens there: hard problems, worked with rigour and care, transformed into outcomes that endure.
 
-We are deliberately small, and deliberately hands-on. Every engagement is led by a partner, AI runs through how we think and how we work, and we measure ourselves not by the weight of the deck but by the outcomes it sets in motion.
+We are deliberately small, and deliberately hands-on. Every engagement is framed with a future-forward lens, AI runs through how we think and how we work, and we measure ourselves not by the weight of the deck but by the outcomes it sets in motion.
 
 ## Why work with us — three short points
-- Partner-led and hands-on. Never delegated down.
+- Future-forward. We build for 2030 — not tweak playbooks written for 2020.
 - AI-native. It is part of who we are and how we work — and what we advise on.
 - Outcome-linked. We measure our work by the change it creates.
 
