@@ -159,7 +159,9 @@
     flex-direction: column;
     gap: 0.9rem;
     padding: clamp(1rem, 3vw, 1.4rem);
-    max-height: min(32vh, 300px);
+    /* Bounded so the expanded chat still fits one viewport under the larger
+       brand block; longer conversations scroll internally. */
+    max-height: min(19vh, 172px);
     overflow-y: auto;
   }
 
