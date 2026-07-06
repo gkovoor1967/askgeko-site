@@ -1,16 +1,9 @@
 ---
-// Home — full-height dark hero. The first screen of the site:
-// the compass mark, the firm name, the tagline, one positioning line,
-// and a thin gold rule. Restraint over decoration.
-//
-// Copy is taken verbatim from askgeko-content.md:
-//   tagline         — "The Leadership Alchemists"
-//   positioning line — the hero sentence
-//
-// Below the hero sit two quiet sections: an Ask GeKo teaser and a featured
-// insight (the newest article), each a restrained invitation deeper into the
-// site — no embedded chat, no clutter.
+// Home — a compressed hero (no longer full-height) with the Ask GeKo chat
+// widget embedded directly below, so on a typical laptop the chat input is
+// visible without scrolling. A featured-insight section follows.
 import Base from '../layouts/Base.astro';
+import AskGeKoChat from '../components/AskGeKoChat.astro';
 import { getCollection } from 'astro:content';
 
 // Newest article, sorted the same way as the Articles page.
@@ -20,10 +13,9 @@ const latest = (await getCollection('articles')).sort(
 ---
 
 <Base>
+  <!-- Compressed dark hero: mark, wordmark, tagline, rule, positioning line. -->
   <section class="hero">
     <div class="hero-inner">
-      <!-- Gold compass mark on a transparent ground, sitting directly on the
-           dark hero (white background removed from the source logo). -->
       <img
         class="hero-mark"
         src="/logo-transparent.png"
@@ -31,12 +23,9 @@ const latest = (await getCollection('articles')).sort(
         width="329"
         height="348"
       />
-
       <h1 class="wordmark">Ask GeKo Advisory</h1>
       <p class="tagline">The Leadership Alchemists</p>
-
       <hr class="rule-gold hero-rule" />
-
       <p class="positioning">
         We help leaders and organisations tackle their hardest decisions
         — and turn them into lasting advantage.
@@ -44,19 +33,11 @@ const latest = (await getCollection('articles')).sort(
     </div>
   </section>
 
-  <!-- Ask GeKo teaser — a quiet invitation, not the chat itself. -->
-  <section class="home-section ask-teaser">
+  <!-- Ask GeKo chat widget, embedded directly below the hero. -->
+  <section class="home-chat">
     <div class="container">
-      <p class="eyebrow">Ask GeKo</p>
-      <p class="teaser-line">Have a question worth a considered answer?</p>
-      <p class="teaser-support">
-        Put it to Ask GeKo — the firm's AI advisor — and think it through,
-        privately and without obligation.
-      </p>
-      <a class="gold-link" href="/ask">
-        Think it through with us
-        <span class="arrow" aria-hidden="true">→</span>
-      </a>
+      <p class="eyebrow chat-eyebrow">Ask GeKo</p>
+      <AskGeKoChat />
     </div>
   </section>
 
@@ -79,19 +60,14 @@ const latest = (await getCollection('articles')).sort(
 </Base>
 
 <style>
-  /* Full-height dark hero, sitting just below the light header bar. */
+  /* Compressed hero — content pulled up, tighter spacing, not full height. */
   .hero {
-    min-height: calc(100dvh - 73px); /* viewport minus the 72px header + 1px rule */
-    display: grid;
-    place-items: center;
     text-align: center;
-    padding: 4rem var(--page-pad);
+    padding: clamp(1.9rem, 4vw, 2.75rem) var(--page-pad) clamp(1.25rem, 3vw, 1.75rem);
     color: var(--bone);
     background: var(--ink);
-    /* A single, very quiet pool of light behind the mark — no gradients loud
-       enough to notice, just enough to lift the composition off flat black. */
     background-image: radial-gradient(
-      60% 55% at 50% 38%,
+      60% 60% at 50% 42%,
       var(--ink-2) 0%,
       var(--ink) 70%
     );
@@ -99,50 +75,47 @@ const latest = (await getCollection('articles')).sort(
 
   .hero-inner {
     max-width: 46rem;
+    margin-inline: auto;
     /* One slow load rise — no bounce; disabled under prefers-reduced-motion. */
     animation: hero-rise 1.1s ease-out both;
   }
 
-  /* Compass mark, transparent PNG directly on the dark ground. A soft
-     drop-shadow lifts it without the old white "coin". */
   .hero-mark {
-    width: clamp(120px, 16vw, 156px);
+    width: clamp(60px, 8vw, 80px);
     height: auto;
-    margin: 0 auto 2rem;
-    filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.55));
+    margin: 0 auto 0.9rem;
+    filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.5));
   }
 
   .wordmark {
-    font-size: clamp(2.6rem, 7vw, 4.6rem);
+    font-size: clamp(1.9rem, 4.4vw, 2.9rem);
     font-weight: 500;
     letter-spacing: 0.005em;
     color: var(--bone);
     margin: 0;
   }
 
-  /* Tagline in the eyebrow style — uppercase, widely tracked, gold. */
   .tagline {
     font-family: var(--font-body);
     text-transform: uppercase;
     letter-spacing: 0.3em;
-    font-size: clamp(0.72rem, 1.6vw, 0.85rem);
+    font-size: clamp(0.68rem, 1.5vw, 0.8rem);
     color: var(--gold);
-    margin: 1rem 0 0;
-    /* nudge for optical centring of tracked text */
+    margin: 0.75rem 0 0;
     padding-left: 0.3em;
   }
 
   .hero-rule {
-    width: 88px;
-    margin: 2rem auto;
+    width: 72px;
+    margin: 0.9rem auto;
   }
 
   .positioning {
     font-family: var(--font-display);
-    font-size: clamp(1.2rem, 2.4vw, 1.6rem);
-    line-height: 1.45;
+    font-size: clamp(1.05rem, 2vw, 1.35rem);
+    line-height: 1.35;
     color: var(--mute-dark);
-    max-width: 34rem;
+    max-width: 32rem;
     margin: 0 auto;
   }
 
@@ -157,36 +130,27 @@ const latest = (await getCollection('articles')).sort(
     }
   }
 
-  /* --- Quiet sections below the hero --- */
-  .home-section {
-    padding-block: clamp(3.5rem, 8vw, 6rem);
+  /* --- Chat section (light) --- */
+  .home-chat {
+    padding-block: clamp(1.2rem, 3vw, 2rem);
   }
 
-  /* Second section on the secondary warm surface + a thin gold hairline,
-     to separate it from the teaser without adding weight. */
+  .chat-eyebrow {
+    max-width: 46rem;
+    margin: 0 auto 0.7rem;
+    text-align: center;
+  }
+
+  /* --- Featured insight --- */
+  .home-section {
+    padding-block: clamp(3rem, 7vw, 5rem);
+  }
+
   .home-section.latest {
     background: var(--bone-2);
     border-top: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
   }
 
-  /* Ask GeKo teaser */
-  .teaser-line {
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 3.6vw, 2.4rem);
-    line-height: 1.2;
-    color: var(--ink);
-    max-width: 24ch;
-    margin: 1rem 0 0;
-  }
-
-  .teaser-support {
-    max-width: 46ch;
-    color: var(--mute-light);
-    font-size: 1.05rem;
-    margin: 0.85rem 0 0;
-  }
-
-  /* Shared gold call-to-action link — understated, arrow nudges on hover. */
   .gold-link {
     display: inline-flex;
     align-items: center;
@@ -212,7 +176,6 @@ const latest = (await getCollection('articles')).sort(
     transform: translateX(4px);
   }
 
-  /* Featured insight */
   .latest-link {
     display: block;
     max-width: 68ch;
@@ -231,8 +194,6 @@ const latest = (await getCollection('articles')).sort(
     margin: 0.75rem 0 0;
   }
 
-  /* When used as the cue inside the article link, the arrow still nudges but
-     the margin matches the block's rhythm. */
   .as-cue {
     margin-top: 1.25rem;
   }

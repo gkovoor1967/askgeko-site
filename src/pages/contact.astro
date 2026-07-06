@@ -1,0 +1,251 @@
+---
+// Contact — the "go further" handoff. A Netlify Form (name / email / question)
+// that captures enquiries for george@askgeko.com, plus a reserved block for a
+// future QR code. Netlify detects the form from the built HTML (data-netlify +
+// hidden form-name), captures each submission, and emails it once an email
+// notification is configured in the Netlify dashboard. Progressive
+// enhancement: the script submits without leaving the page; with JS off the
+// plain POST still works via Netlify's own success page.
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="Contact — Ask GeKo Advisory"
+  description="Ready to go further? Leave your details and a partner will follow up."
+>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Contact</p>
+      <h1 class="page-title">Ready to go further?</h1>
+      <p class="intro">
+        Want real help on a specific decision? Leave your details and a partner
+        will follow up — or write to
+        <a href="mailto:george@askgeko.com?subject=Ask%20GeKo%20enquiry">george@askgeko.com</a>.
+      </p>
+
+      <div class="contact-grid">
+        <form
+          name="go-further"
+          method="POST"
+          data-netlify="true"
+          netlify-honeypot="bot-field"
+          id="handoff"
+          class="handoff"
+        >
+          <!-- Netlify needs this hidden field to match the submission. -->
+          <input type="hidden" name="form-name" value="go-further" />
+          <!-- Honeypot: hidden from people, catches spam bots. -->
+          <p class="hp" aria-hidden="true">
+            <label>Leave this field empty <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
+          </p>
+
+          <div class="field">
+            <label for="hf-name">Name</label>
+            <input id="hf-name" name="name" type="text" required autocomplete="name" />
+          </div>
+          <div class="field">
+            <label for="hf-email">Email</label>
+            <input id="hf-email" name="email" type="email" required autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="hf-question">What would you like help with?</label>
+            <textarea id="hf-question" name="question" rows="4" required></textarea>
+          </div>
+
+          <button type="submit">Send to the team</button>
+          <p class="handoff-status" id="handoff-status" role="status" aria-live="polite"></p>
+        </form>
+
+        <!-- QR code — reserved. TODO (build step 9): generate a QR code that
+             links to /contact (or a booking link), drop the PNG/SVG in /public,
+             and replace this placeholder block with an <img>. -->
+        <aside class="qr" aria-hidden="true">
+          <div class="qr-frame">
+            <span class="qr-note">QR code<br />coming soon</span>
+          </div>
+          <p class="qr-caption">Scan to reach us</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  // Submit via fetch so the visitor stays on the page. Netlify accepts the
+  // form-encoded POST (including form-name) at any site path. If JS fails,
+  // the plain form still submits to Netlify's default success page.
+  const handoff = document.getElementById('handoff');
+  const handoffStatus = document.getElementById('handoff-status');
+
+  handoff.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = handoff.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    handoffStatus.textContent = 'Sending…';
+
+    try {
+      const body = new URLSearchParams(new FormData(handoff)).toString();
+      const res = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+      });
+      if (res.ok) {
+        handoff.reset();
+        handoffStatus.textContent = "Thank you — we'll be in touch shortly.";
+      } else {
+        handoffStatus.textContent = 'Something went wrong. Please email george@askgeko.com.';
+        btn.disabled = false;
+      }
+    } catch (err) {
+      handoffStatus.textContent = 'Something went wrong. Please email george@askgeko.com.';
+      btn.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  .section {
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+  }
+
+  .page-title {
+    font-size: clamp(1.9rem, 4.5vw, 3rem);
+    color: var(--ink);
+    margin: 0.75rem 0 0;
+  }
+
+  .intro {
+    max-width: 52ch;
+    color: var(--mute-light);
+    font-size: 1.05rem;
+    margin: 1rem 0 0;
+  }
+
+  .intro a {
+    color: var(--gold-deep);
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+    padding-bottom: 1px;
+  }
+
+  /* Form left, QR right on wide screens; stacked on mobile. */
+  .contact-grid {
+    margin-top: clamp(2.5rem, 6vw, 4rem);
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 4rem);
+    align-items: start;
+  }
+
+  @media (min-width: 760px) {
+    .contact-grid {
+      grid-template-columns: minmax(0, 32rem) auto;
+    }
+  }
+
+  /* Honeypot field — present in the DOM for bots, hidden from people. */
+  .hp {
+    display: none;
+  }
+
+  .handoff .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .handoff label {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--mute-light);
+  }
+
+  .handoff input,
+  .handoff textarea {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+    border-radius: 2px;
+    padding: 0.6rem 0.75rem;
+    width: 100%;
+  }
+
+  .handoff textarea {
+    resize: vertical;
+    min-height: 5.5rem;
+  }
+
+  .handoff input:focus-visible,
+  .handoff textarea:focus-visible {
+    outline: 2px solid var(--gold-deep);
+    outline-offset: 1px;
+  }
+
+  .handoff button {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--bone);
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    padding: 0.7rem 1.4rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .handoff button:hover:not(:disabled) {
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .handoff button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .handoff-status {
+    margin: 0.9rem 0 0;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    color: var(--gold-deep);
+    min-height: 1.3em;
+  }
+
+  /* --- QR placeholder --- */
+  .qr {
+    text-align: center;
+  }
+
+  .qr-frame {
+    width: clamp(140px, 40vw, 180px);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, #fff 55%, var(--bone));
+    border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
+  }
+
+  .qr-note {
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.62rem;
+    line-height: 1.6;
+    color: var(--mute-light);
+  }
+
+  .qr-caption {
+    margin: 0.85rem 0 0;
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.68rem;
+    color: var(--gold-deep);
+  }
+</style>
