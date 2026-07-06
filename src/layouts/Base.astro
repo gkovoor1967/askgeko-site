@@ -8,11 +8,14 @@ import Footer from '../components/Footer.astro';
 interface Props {
   title?: string;
   description?: string;
+  // Fullscreen: exactly one viewport, no page scroll, no footer (the homepage).
+  fullscreen?: boolean;
 }
 
 const {
   title = 'Ask GeKo Advisory — The Leadership Alchemists',
   description = 'A boutique management consultancy in Bengaluru, working with leaders on their most consequential decisions.',
+  fullscreen = false,
 } = Astro.props;
 ---
 
@@ -49,12 +52,12 @@ const {
 
     <title>{title}</title>
   </head>
-  <body>
+  <body class:list={[{ fullscreen }]}>
     <Header />
     <main>
       <slot />
     </main>
-    <Footer />
+    {!fullscreen && <Footer />}
   </body>
 </html>
 
@@ -63,4 +66,9 @@ const {
   html, body { height: 100%; }
   body { display: flex; flex-direction: column; min-height: 100vh; }
   main { flex: 1 0 auto; }
+
+  /* Fullscreen pages (homepage): lock to exactly one viewport, no page scroll.
+     Header stays; main fills the remainder and its content scrolls internally. */
+  body.fullscreen { height: 100dvh; min-height: 100dvh; overflow: hidden; }
+  body.fullscreen main { flex: 1 1 auto; min-height: 0; }
 </style>

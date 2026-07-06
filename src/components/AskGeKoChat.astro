@@ -1,39 +1,38 @@
 ---
-// Ask GeKo chat widget — reusable component. The browser POSTs the running
-// conversation to the Netlify Function at /api/ask, which relays it to
-// OpenRouter and returns a reply. No secrets client-side: the API key and
-// model live only in the function's environment variables.
-//
-// Assistant replies render in the serif (the firm "speaking"); the visitor's
-// messages render in the sans. Single instance per page (it uses element IDs).
-const greeting =
-  "Hello — I'm Ask GeKo. Tell me what you're weighing: a strategy to reset, a " +
-  'transition to get right, a decision that cannot be undone. How can I help?';
+// Ask GeKo chat widget — a light panel holding the input and Send button.
+// A static gold-serif caption sits below the panel until the visitor sends
+// their first message; then the caption fades out and the conversation renders
+// above the input inside the panel, scrolling internally (the page never
+// scrolls). The caption is a label, NOT a chat message. No secrets client-side:
+// the API key and model live only in the Netlify function's env vars.
+// Single instance per page (it uses element IDs).
 ---
 
-<div class="chat">
-  <div
-    id="messages"
-    class="messages"
-    role="log"
-    aria-live="polite"
-    aria-label="Conversation with Ask GeKo"
-    data-greeting={greeting}
-  >
-    <!-- Opening message, also present for no-JS visitors. -->
-    <div class="msg assistant">{greeting}</div>
+<div class="chat-widget">
+  <div class="chat">
+    <!-- Conversation — collapsed until the first message is sent. -->
+    <div
+      id="messages"
+      class="messages is-empty"
+      role="log"
+      aria-live="polite"
+      aria-label="Conversation with Ask GeKo"
+    ></div>
+
+    <form id="composer" class="composer">
+      <label class="sr-only" for="ask-input">Your message</label>
+      <textarea
+        id="ask-input"
+        rows="1"
+        placeholder="Ask about leadership, strategy, or how we work…"
+        autocomplete="off"
+      ></textarea>
+      <button id="send" type="submit">Send</button>
+    </form>
   </div>
 
-  <form id="composer" class="composer">
-    <label class="sr-only" for="ask-input">Your message</label>
-    <textarea
-      id="ask-input"
-      rows="1"
-      placeholder="Ask about leadership, strategy, or how we work…"
-      autocomplete="off"
-    ></textarea>
-    <button id="send" type="submit">Send</button>
-  </form>
+  <!-- Static gold-serif caption (a label, not a message). Fades on first send. -->
+  <p id="chat-caption" class="chat-caption">Hello — I'm Ask GeKo. How can I help?</p>
 </div>
 
 <script>
@@ -41,13 +40,15 @@ const greeting =
   const input = document.getElementById('ask-input');
   const log = document.getElementById('messages');
   const sendBtn = document.getElementById('send');
+  const caption = document.getElementById('chat-caption');
 
-  // Conversation state. Seed with the greeting already shown in the markup so
-  // the model has context. The system prompt is added server-side only.
-  const messages = [{ role: 'assistant', content: log.dataset.greeting || '' }];
+  // Conversation state starts empty — the greeting is a static caption, not a
+  // seeded message. The system prompt is added server-side only.
+  const messages = [];
+  let started = false;
 
-  // Render a message and scroll it into view. Uses textContent (not innerHTML)
-  // so nothing a visitor or the model returns can inject markup.
+  // Render a message. Uses textContent (not innerHTML) so nothing a visitor or
+  // the model returns can inject markup.
   function addMessage(cssRole, content) {
     const el = document.createElement('div');
     el.className = 'msg ' + cssRole;
@@ -62,6 +63,14 @@ const greeting =
   async function send(text) {
     const trimmed = text.trim();
     if (pending || !trimmed) return;
+
+    // First message: reveal the conversation area and fade out the caption.
+    if (!started) {
+      started = true;
+      log.classList.remove('is-empty');
+      caption.classList.add('gone');
+      setTimeout(() => { caption.style.display = 'none'; }, 450);
+    }
 
     pending = true;
     sendBtn.disabled = true;
@@ -124,53 +133,65 @@ const greeting =
   // Gentle auto-resize of the textarea, up to a limit.
   function autoresize() {
     input.style.height = 'auto';
-    input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
   }
   input.addEventListener('input', autoresize);
 </script>
 
 <style>
-  /* Chat panel — sits quietly in the page; centred under the hero. */
-  .chat {
-    max-width: 46rem;
+  .chat-widget {
+    width: 100%;
+    max-width: 40rem;
     margin-inline: auto;
-    border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
-    background: color-mix(in srgb, #fff 45%, var(--bone));
   }
 
+  /* Light panel on the dark screen. */
+  .chat {
+    border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
+    background: color-mix(in srgb, #fff 55%, var(--bone));
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  }
+
+  /* Conversation area — hidden until the first message, then bounded and
+     internally scrollable so the page itself never scrolls. */
   .messages {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    padding: clamp(1.1rem, 3vw, 1.5rem);
-    /* Compact so the input stays above the fold on a typical laptop. */
-    min-height: 88px;
-    max-height: 40vh;
+    gap: 0.9rem;
+    padding: clamp(1rem, 3vw, 1.4rem);
+    max-height: min(32vh, 300px);
     overflow-y: auto;
   }
 
-  .msg {
+  .messages.is-empty {
+    display: none;
+  }
+
+  /* NB: messages are created by JS at runtime, so they don't receive Astro's
+     scoped-style attribute. Target them with :global(), kept local by the
+     scoped `.messages` ancestor so nothing leaks outside this widget. */
+  .messages :global(.msg) {
     max-width: 88%;
-    padding: 0.7rem 1rem;
+    padding: 0.6rem 0.95rem;
     line-height: 1.5;
   }
 
   /* Assistant = the firm speaking: serif, seated on a thin gold rule, left. */
-  .msg.assistant {
+  .messages :global(.msg.assistant) {
     align-self: flex-start;
     font-family: var(--font-display);
-    font-size: 1.18rem;
+    font-size: 1.15rem;
     color: var(--ink);
     border-left: 2px solid color-mix(in srgb, var(--gold) 70%, transparent);
   }
 
-  .msg.typing {
+  .messages :global(.msg.typing) {
     color: var(--mute-light);
     letter-spacing: 0.15em;
   }
 
   /* Visitor = sans, right-aligned, on a quiet warm surface. */
-  .msg.user {
+  .messages :global(.msg.user) {
     align-self: flex-end;
     font-family: var(--font-body);
     font-size: 1rem;
@@ -180,14 +201,18 @@ const greeting =
     white-space: pre-wrap;
   }
 
-  /* --- Composer --- */
+  /* --- Composer (input + Send) --- */
   .composer {
     display: flex;
     gap: 0.75rem;
     align-items: flex-end;
     padding: 0.85rem;
+    background: color-mix(in srgb, #fff 40%, var(--bone));
+  }
+
+  /* A hairline only appears once the conversation is visible above it. */
+  .messages:not(.is-empty) + .composer {
     border-top: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
-    background: color-mix(in srgb, #fff 30%, var(--bone));
   }
 
   .composer textarea {
@@ -201,7 +226,7 @@ const greeting =
     border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
     border-radius: 2px;
     padding: 0.6rem 0.75rem;
-    max-height: 160px;
+    max-height: 120px;
   }
 
   .composer textarea:focus-visible {
@@ -223,13 +248,32 @@ const greeting =
   }
 
   .composer button:hover:not(:disabled) {
-    background: transparent;
-    color: var(--ink);
+    background: color-mix(in srgb, var(--ink) 82%, var(--gold));
   }
 
   .composer button:disabled {
     opacity: 0.5;
     cursor: default;
+  }
+
+  /* Static gold-serif caption below the panel; fades out on first send. */
+  .chat-caption {
+    margin: 1.15rem 0 0;
+    text-align: center;
+    font-family: var(--font-display);
+    font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+    color: var(--gold);
+    transition: opacity 0.4s ease;
+  }
+
+  .chat-caption.gone {
+    opacity: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chat-caption {
+      transition: none;
+    }
   }
 
   /* Visually-hidden label, still read by screen readers. */

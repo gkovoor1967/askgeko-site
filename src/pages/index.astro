@@ -1,21 +1,15 @@
 ---
-// Home — a compressed hero (no longer full-height) with the Ask GeKo chat
-// widget embedded directly below, so on a typical laptop the chat input is
-// visible without scrolling. A featured-insight section follows.
+// Home — a single full-viewport dark screen that never scrolls. The brand
+// (compass mark, wordmark, tagline, positioning line) sits upper-middle; the
+// Ask GeKo chat widget sits lower-centre with a static gold caption below it.
+// No featured section — this page is one screen only.
 import Base from '../layouts/Base.astro';
 import AskGeKoChat from '../components/AskGeKoChat.astro';
-import { getCollection } from 'astro:content';
-
-// Newest article, sorted the same way as the Articles page.
-const latest = (await getCollection('articles')).sort(
-  (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
-)[0];
 ---
 
-<Base>
-  <!-- Compressed dark hero: mark, wordmark, tagline, rule, positioning line. -->
-  <section class="hero">
-    <div class="hero-inner">
+<Base fullscreen>
+  <section class="screen">
+    <div class="brand-block">
       <img
         class="hero-mark"
         src="/logo-transparent.png"
@@ -31,64 +25,54 @@ const latest = (await getCollection('articles')).sort(
         — and turn them into lasting advantage.
       </p>
     </div>
-  </section>
 
-  <!-- Ask GeKo chat widget, embedded directly below the hero. -->
-  <section class="home-chat">
-    <div class="container">
-      <p class="eyebrow chat-eyebrow">Ask GeKo</p>
+    <div class="chat-block">
       <AskGeKoChat />
     </div>
   </section>
-
-  <!-- Featured insight — the most recent article, linking into /articles. -->
-  {latest && (
-    <section class="home-section latest">
-      <div class="container">
-        <p class="eyebrow">Latest thinking</p>
-        <a class="latest-link" href="/articles">
-          <h2 class="latest-title">{latest.data.title}</h2>
-          <p class="latest-excerpt">{latest.data.excerpt}</p>
-          <span class="gold-link as-cue">
-            Read the latest thinking
-            <span class="arrow" aria-hidden="true">→</span>
-          </span>
-        </a>
-      </div>
-    </section>
-  )}
 </Base>
 
 <style>
-  /* Compressed hero — content pulled up, tighter spacing, not full height. */
-  .hero {
+  /* One screen, dark ink, no scroll. Brand and chat are centred as a group
+     with a generous gap so the brand reads upper-middle and the chat lower. */
+  .screen {
+    height: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1.75rem, 6vh, 4rem);
+    padding: clamp(1.25rem, 3vh, 2.5rem) var(--page-pad);
     text-align: center;
-    padding: clamp(1.9rem, 4vw, 2.75rem) var(--page-pad) clamp(1.25rem, 3vw, 1.75rem);
     color: var(--bone);
     background: var(--ink);
     background-image: radial-gradient(
-      60% 60% at 50% 42%,
+      62% 55% at 50% 40%,
       var(--ink-2) 0%,
-      var(--ink) 70%
+      var(--ink) 72%
     );
+    overflow: hidden;
   }
 
-  .hero-inner {
-    max-width: 46rem;
-    margin-inline: auto;
-    /* One slow load rise — no bounce; disabled under prefers-reduced-motion. */
-    animation: hero-rise 1.1s ease-out both;
+  /* --- Brand (upper-middle) --- */
+  .brand-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: rise 1.1s ease-out both;
   }
 
   .hero-mark {
-    width: clamp(60px, 8vw, 80px);
+    width: clamp(52px, 7.5vh, 76px);
     height: auto;
-    margin: 0 auto 0.9rem;
-    filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.5));
+    margin: 0 auto 0.85rem;
+    filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.55));
   }
 
   .wordmark {
-    font-size: clamp(1.9rem, 4.4vw, 2.9rem);
+    font-size: clamp(1.8rem, 4.4vw, 2.7rem);
     font-weight: 500;
     letter-spacing: 0.005em;
     color: var(--bone);
@@ -99,30 +83,37 @@ const latest = (await getCollection('articles')).sort(
     font-family: var(--font-body);
     text-transform: uppercase;
     letter-spacing: 0.3em;
-    font-size: clamp(0.68rem, 1.5vw, 0.8rem);
+    font-size: clamp(0.66rem, 1.5vw, 0.78rem);
     color: var(--gold);
-    margin: 0.75rem 0 0;
+    margin: 0.6rem 0 0;
     padding-left: 0.3em;
   }
 
   .hero-rule {
-    width: 72px;
-    margin: 0.9rem auto;
+    width: 64px;
+    margin: 0.85rem auto;
   }
 
   .positioning {
     font-family: var(--font-display);
-    font-size: clamp(1.05rem, 2vw, 1.35rem);
+    font-size: clamp(1rem, 1.9vw, 1.3rem);
     line-height: 1.35;
     color: var(--mute-dark);
-    max-width: 32rem;
+    max-width: 30rem;
     margin: 0 auto;
   }
 
-  @keyframes hero-rise {
+  /* --- Chat (lower-centre) --- */
+  .chat-block {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  @keyframes rise {
     from {
       opacity: 0;
-      transform: translateY(14px);
+      transform: translateY(12px);
     }
     to {
       opacity: 1;
@@ -130,82 +121,9 @@ const latest = (await getCollection('articles')).sort(
     }
   }
 
-  /* --- Chat section (light) --- */
-  .home-chat {
-    padding-block: clamp(1.2rem, 3vw, 2rem);
-  }
-
-  .chat-eyebrow {
-    max-width: 46rem;
-    margin: 0 auto 0.7rem;
-    text-align: center;
-  }
-
-  /* --- Featured insight --- */
-  .home-section {
-    padding-block: clamp(3rem, 7vw, 5rem);
-  }
-
-  .home-section.latest {
-    background: var(--bone-2);
-    border-top: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
-  }
-
-  .gold-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
-    font-family: var(--font-body);
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    color: var(--gold-deep);
-    border-bottom: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
-    padding-bottom: 3px;
-  }
-
-  .arrow {
-    transition: transform 0.2s ease;
-  }
-
-  .gold-link:hover .arrow,
-  .gold-link:focus-visible .arrow,
-  .latest-link:hover .arrow,
-  .latest-link:focus-visible .arrow {
-    transform: translateX(4px);
-  }
-
-  .latest-link {
-    display: block;
-    max-width: 68ch;
-  }
-
-  .latest-title {
-    font-size: clamp(1.5rem, 3.2vw, 2.1rem);
-    color: var(--ink);
-    margin: 1rem 0 0;
-    transition: color 0.2s ease;
-  }
-
-  .latest-excerpt {
-    color: var(--mute-light);
-    font-size: 1.05rem;
-    margin: 0.75rem 0 0;
-  }
-
-  .as-cue {
-    margin-top: 1.25rem;
-  }
-
-  .latest-link:hover .latest-title,
-  .latest-link:focus-visible .latest-title {
-    color: var(--gold-deep);
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .arrow {
-      transition: none;
+    .brand-block {
+      animation: none;
     }
   }
 </style>
