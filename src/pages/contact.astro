@@ -56,14 +56,17 @@ import Base from '../layouts/Base.astro';
           <p class="handoff-status" id="handoff-status" role="status" aria-live="polite"></p>
         </form>
 
-        <!-- QR code — reserved. TODO (build step 9): generate a QR code that
-             links to /contact (or a booking link), drop the PNG/SVG in /public,
-             and replace this placeholder block with an <img>. -->
-        <aside class="qr" aria-hidden="true">
-          <div class="qr-frame">
-            <span class="qr-note">QR code<br />coming soon</span>
-          </div>
-          <p class="qr-caption">Scan to reach us</p>
+        <!-- Gold-on-dark QR (public/callback-qr.svg) linking to /callback.
+             A high-res print version lives at public/callback-qr-print.png. -->
+        <aside class="qr">
+          <img
+            class="qr-img"
+            src="/callback-qr.svg"
+            width="200"
+            height="200"
+            alt="QR code linking to askgeko.com/callback"
+          />
+          <p class="qr-caption"><a href="/callback">Scan to have GeKo call you</a></p>
         </aside>
       </div>
     </div>
@@ -128,17 +131,18 @@ import Base from '../layouts/Base.astro';
     padding-bottom: 1px;
   }
 
-  /* Form left, QR right on wide screens; stacked on mobile. */
+  /* Two balanced panels: form left, QR right, the QR vertically centred
+     against the taller form. Stacks on mobile. */
   .contact-grid {
     margin-top: clamp(2.5rem, 6vw, 4rem);
     display: grid;
     gap: clamp(2.5rem, 6vw, 4rem);
-    align-items: start;
+    align-items: center;
   }
 
   @media (min-width: 760px) {
     .contact-grid {
-      grid-template-columns: minmax(0, 32rem) auto;
+      grid-template-columns: minmax(0, 30rem) auto;
     }
   }
 
@@ -217,35 +221,35 @@ import Base from '../layouts/Base.astro';
     min-height: 1.3em;
   }
 
-  /* --- QR placeholder --- */
+  /* --- QR panel (gold-on-dark branded code, links to /callback) --- */
   .qr {
     text-align: center;
-  }
-
-  .qr-frame {
-    width: clamp(140px, 40vw, 180px);
-    aspect-ratio: 1;
-    display: grid;
-    place-items: center;
-    background: color-mix(in srgb, #fff 55%, var(--bone));
+    /* subtle card framing the artifact, matching the form's weight */
+    padding: clamp(1.25rem, 3vw, 1.75rem);
+    background: color-mix(in srgb, #fff 45%, var(--bone));
     border: 1px solid color-mix(in srgb, var(--gold) 35%, transparent);
   }
 
-  .qr-note {
-    font-family: var(--font-body);
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    font-size: 0.62rem;
-    line-height: 1.6;
-    color: var(--mute-light);
+  .qr-img {
+    width: clamp(150px, 42vw, 190px);
+    height: auto;
+    display: block;
+    margin: 0 auto;
   }
 
+  /* Label as a gold uppercase eyebrow, like our section headers. */
   .qr-caption {
-    margin: 0.85rem 0 0;
+    margin: 1.1rem 0 0;
     font-family: var(--font-body);
     text-transform: uppercase;
-    letter-spacing: 0.18em;
-    font-size: 0.68rem;
+    letter-spacing: 0.3em;
+    font-size: 0.72rem;
     color: var(--gold-deep);
+  }
+
+  .qr-caption a {
+    color: var(--gold-deep);
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+    padding-bottom: 2px;
   }
 </style>

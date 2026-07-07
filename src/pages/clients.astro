@@ -1,15 +1,13 @@
 ---
-// Clients — a single horizontal layer of client logos, organised into three
-// groups (Consumer · Private Equity · B2B & Technology) divided by thin gold
-// hairlines. Named clients only, no project details (per permissions). Order
-// verbatim from askgeko-content.md: Diageo leads. Arthur D. Little is
-// deliberately excluded until the work is done — do not add it back without
-// George's word.
+// Clients — a single horizontal layer of client logos, organised into groups
+// (Consumer · Private Equity · B2B · Ventures) divided by thin gold hairlines.
+// Named clients only, no project details (per permissions). Order verbatim
+// from askgeko-content.md: Diageo leads. Arthur D. Little is deliberately
+// excluded until the work is done — do not add it back without George's word.
 //
 // Each logo has a mixed background/resolution, so every logo sits in an
-// identical fixed-height zone, multiply-blended (drops white grounds into the
-// card) and rendered greyscale, with colour restored on hover. On desktop all
-// five sit in one row; on mobile the three groups stack with their headers.
+// identical fixed-height zone; on desktop the groups sit in one row, on mobile
+// they stack with their headers.
 import Base from '../layouts/Base.astro';
 
 const groups = [
@@ -27,10 +25,16 @@ const groups = [
     ],
   },
   {
-    header: 'B2B & Technology',
+    header: 'B2B',
     clients: [
       { name: 'Canadian Crystalline', label: 'Water & Beverage Equipment', logo: '/canadian-crystalline.png' },
       { name: 'AlgoSynth',            label: 'Sweetener Technologies',      logo: '/algosynth.png' },
+    ],
+  },
+  {
+    header: 'Ventures',
+    clients: [
+      { name: 'Be-Pawsh', label: 'Pet care tech startup', logo: '/be-pawsh.webp' },
     ],
   },
 ];

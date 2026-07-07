@@ -1,0 +1,253 @@
+---
+// Callback — request a call back from Ask GeKo's AI advisor. On submit the
+// browser POSTs to the /api/callback function, which records the request via
+// Netlify Forms and places an outbound Vapi call. The form also carries
+// data-netlify + a hidden form-name so Netlify detects and registers the
+// "callback" form at build (the function records into it server-side).
+//
+// The expectation line below is written to match the assistant's opening on
+// the call, so the promise on the page and the voice on the phone feel like
+// one continuous experience.
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="Have GeKo call you — Ask GeKo Advisory"
+  description="Leave your number and Ask GeKo's AI advisor will call you back within a minute — George's voice, his AI."
+>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">Callback</p>
+      <h1 class="page-title">Have GeKo call you</h1>
+      <p class="promise">
+        Our AI advisor will call you back within a minute — you'll hear George's
+        voice; it's his AI.
+      </p>
+
+      <form
+        name="callback"
+        method="POST"
+        data-netlify="true"
+        netlify-honeypot="bot-field"
+        id="callback-form"
+        class="cb-form"
+      >
+        <!-- Netlify needs these to detect and match the submission. -->
+        <input type="hidden" name="form-name" value="callback" />
+        <p class="hp" aria-hidden="true">
+          <label>Leave this field empty <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
+        </p>
+
+        <div class="field">
+          <label for="cb-name">Name</label>
+          <input id="cb-name" name="name" type="text" required autocomplete="name" />
+        </div>
+
+        <div class="field">
+          <label for="cb-company">Company</label>
+          <input id="cb-company" name="company" type="text" required autocomplete="organization" />
+        </div>
+
+        <div class="field">
+          <label for="cb-phone">Phone</label>
+          <div class="phone-row">
+            <input
+              id="cb-cc"
+              name="countrycode"
+              type="text"
+              value="+91"
+              inputmode="tel"
+              aria-label="Country code"
+              class="cc"
+            />
+            <input
+              id="cb-phone"
+              name="phone"
+              type="tel"
+              required
+              autocomplete="tel-national"
+              inputmode="tel"
+              placeholder="98765 43210"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="cb-question">What's on your mind? <span class="opt">(optional)</span></label>
+          <textarea id="cb-question" name="question" rows="3"></textarea>
+        </div>
+
+        <button type="submit">Call me</button>
+        <p class="cb-status" id="cb-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const form = document.getElementById('callback-form');
+  const statusEl = document.getElementById('cb-status');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    statusEl.className = 'cb-status';
+    statusEl.textContent = 'Requesting your call…';
+
+    const payload = Object.fromEntries(new FormData(form).entries());
+
+    try {
+      const res = await fetch('/api/callback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.ok) {
+        statusEl.textContent = data.message || 'Calling you now — your phone should ring within a minute.';
+        statusEl.classList.add('ok');
+        form.reset();
+        const cc = form.querySelector('[name="countrycode"]');
+        if (cc) cc.value = '+91';
+      } else {
+        statusEl.textContent = data.error || 'Something went wrong. Please email george@askgeko.com.';
+        statusEl.classList.add('err');
+        btn.disabled = false;
+      }
+    } catch (err) {
+      statusEl.textContent = 'Something went wrong reaching us. Please email george@askgeko.com.';
+      statusEl.classList.add('err');
+      btn.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  .section {
+    padding-block: clamp(3.5rem, 8vw, 6rem);
+  }
+
+  .page-title {
+    font-size: clamp(1.9rem, 4.5vw, 3rem);
+    color: var(--ink);
+    margin: 0.75rem 0 0;
+  }
+
+  /* Expectation-setting line — serif, the firm's voice. */
+  .promise {
+    font-family: var(--font-display);
+    font-size: clamp(1.2rem, 2.6vw, 1.6rem);
+    line-height: 1.35;
+    color: var(--gold-deep);
+    max-width: 32ch;
+    margin: 1rem 0 0;
+  }
+
+  .cb-form {
+    margin-top: clamp(2rem, 5vw, 3rem);
+    max-width: 34rem;
+  }
+
+  /* Honeypot — present for bots, hidden from people. */
+  .hp {
+    display: none;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .field label {
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--mute-light);
+  }
+
+  .opt {
+    letter-spacing: 0.08em;
+    text-transform: none;
+    opacity: 0.8;
+  }
+
+  .cb-form input,
+  .cb-form textarea {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--ink);
+    background: #fff;
+    border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+    border-radius: 2px;
+    padding: 0.6rem 0.75rem;
+    width: 100%;
+  }
+
+  .cb-form textarea {
+    resize: vertical;
+    min-height: 4.5rem;
+  }
+
+  /* Phone: country code + number. */
+  .phone-row {
+    display: flex;
+    gap: 0.6rem;
+  }
+
+  .phone-row .cc {
+    width: 5rem;
+    flex: 0 0 auto;
+    text-align: center;
+  }
+
+  .cb-form input:focus-visible,
+  .cb-form textarea:focus-visible {
+    outline: 2px solid var(--gold-deep);
+    outline-offset: 1px;
+  }
+
+  .cb-form button {
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--bone);
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    padding: 0.7rem 1.6rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .cb-form button:hover:not(:disabled) {
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .cb-form button:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .cb-status {
+    margin: 1rem 0 0;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    min-height: 1.4em;
+    color: var(--mute-light);
+  }
+
+  .cb-status.ok {
+    color: var(--gold-deep);
+  }
+
+  .cb-status.err {
+    color: #9a3b2f; /* restrained warm red, readable on bone */
+  }
+</style>
