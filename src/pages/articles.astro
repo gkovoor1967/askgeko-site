@@ -1,8 +1,10 @@
 ---
 // Articles — a list built from the Markdown files in src/content/articles/.
-// Each entry = title, date, short excerpt, and a link out to LinkedIn
-// (per CLAUDE.md, page 5). George adds a new piece simply by dropping another
-// Markdown file into that folder; this page picks it up automatically.
+// Each entry = title, date, short excerpt. George's own pieces now open as
+// full pages on this site (/articles/<slug>); "mention" entries (external
+// coverage) keep their outbound link to LinkedIn. George adds a new piece
+// simply by dropping another Markdown file into that folder; this page picks
+// it up automatically.
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 
@@ -10,6 +12,14 @@ import { getCollection } from 'astro:content';
 const entries = (await getCollection('articles')).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf(),
 );
+
+// Clean slug from the file id (drop the leading date) — matches the routing
+// in src/pages/articles/[slug].astro.
+const toSlug = (id: string) => id.replace(/^\d{4}-\d{2}-\d{2}-/, '');
+
+// Where a card points: mentions link out to LinkedIn; articles open on-site.
+const hrefFor = (entry: (typeof entries)[number]) =>
+  entry.data.type === 'mention' ? entry.data.linkedin : `/articles/${toSlug(entry.id)}`;
 
 // Long-form, human-readable date (e.g. "2 July 2026").
 const fmt = (d: Date) =>
@@ -30,9 +40,9 @@ const fmt = (d: Date) =>
           <li class="entry">
             <a
               class="entry-link"
-              href={entry.data.linkedin}
-              target="_blank"
-              rel="noopener"
+              href={hrefFor(entry)}
+              target={entry.data.type === 'mention' ? '_blank' : undefined}
+              rel={entry.data.type === 'mention' ? 'noopener' : undefined}
             >
               <div class="entry-meta">
                 <time datetime={entry.data.date.toISOString().slice(0, 10)}>
@@ -47,7 +57,7 @@ const fmt = (d: Date) =>
               <p class="entry-excerpt">{entry.data.excerpt}</p>
 
               <span class="entry-cue">
-                {entry.data.type === 'mention' ? 'View coverage on LinkedIn' : 'Read on LinkedIn'}
+                {entry.data.type === 'mention' ? 'View coverage on LinkedIn' : 'Read article'}
                 <span aria-hidden="true" class="arrow">→</span>
               </span>
             </a>

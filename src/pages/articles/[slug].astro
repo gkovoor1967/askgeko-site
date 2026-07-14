@@ -1,0 +1,257 @@
+---
+// Full on-site article page: /articles/<slug>.
+// One page per Markdown file in src/content/articles that is a real article
+// (mentions stay excerpt-only on the index and link out instead).
+// Editorial layout in the brand's design language: serif headline, a lead
+// image, a comfortable ~68ch measure of Inter body, and a link back to the
+// original LinkedIn post at the end.
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const articles = await getCollection('articles', (e) => e.data.type !== 'mention');
+  // Clean slug from the file id: drop the leading "YYYY-MM-DD-" date prefix.
+  return articles.map((entry) => ({
+    params: { slug: entry.id.replace(/^\d{4}-\d{2}-\d{2}-/, '') },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const { title, date, excerpt, linkedin, heroImage, heroAlt, heroCaption } = entry.data;
+
+// Long-form, human-readable date (e.g. "2 July 2026").
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+// Rough reading time from the raw Markdown body (~200 words/min).
+const words = entry.body ? entry.body.trim().split(/\s+/).length : 0;
+const minutes = Math.max(1, Math.round(words / 200));
+---
+
+<Base title={`${title} — Ask GeKo Advisory`} description={excerpt}>
+  <article class="article">
+    <div class="container narrow">
+      <header class="head">
+        <a class="back" href="/articles">
+          <span aria-hidden="true">←</span> Articles
+        </a>
+        <div class="meta">
+          <time datetime={date.toISOString().slice(0, 10)}>{fmt(date)}</time>
+          <span class="dot" aria-hidden="true">·</span>
+          <span>{minutes} min read</span>
+        </div>
+        <h1 class="title">{title}</h1>
+      </header>
+    </div>
+
+    {heroImage && (
+      <figure class="hero">
+        <div class="container narrow">
+          <img src={heroImage} alt={heroAlt ?? title} />
+          {heroCaption && <figcaption>{heroCaption}</figcaption>}
+        </div>
+      </figure>
+    )}
+
+    <div class="container narrow">
+      <div class="prose">
+        <Content />
+      </div>
+
+      <hr class="rule-gold end-rule" />
+
+      <a class="source" href={linkedin} target="_blank" rel="noopener">
+        Originally published on LinkedIn
+        <span aria-hidden="true" class="arrow">→</span>
+      </a>
+    </div>
+  </article>
+</Base>
+
+<style>
+  /* Reading column: a touch narrower than the site max for a comfortable
+     ~65–75 character line length in body copy. */
+  .narrow {
+    max-width: 720px;
+  }
+
+  .article {
+    padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(3.5rem, 8vw, 6rem);
+  }
+
+  /* --- Header --- */
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--mute-light);
+    transition: color 0.2s ease;
+  }
+  .back:hover { color: var(--gold-deep); }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1.75rem;
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.68rem;
+    color: var(--mute-light);
+  }
+  .meta .dot { color: var(--gold); }
+
+  .title {
+    font-size: clamp(2rem, 5.2vw, 3.2rem);
+    line-height: 1.08;
+    color: var(--ink);
+    margin: 0.6rem 0 0;
+  }
+
+  /* --- Hero image --- */
+  .hero {
+    margin: clamp(2rem, 5vw, 3rem) 0 0;
+  }
+  .hero img {
+    width: 100%;
+    border-radius: 3px;
+    /* a hairline gold frame ties images to the brand */
+    border: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
+  }
+  .hero figcaption,
+  .prose :global(figcaption) {
+    margin-top: 0.75rem;
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    color: var(--mute-light);
+    font-style: italic;
+  }
+
+  /* --- Prose --- */
+  .prose {
+    margin-top: clamp(2rem, 5vw, 3rem);
+    font-size: 1.12rem;
+    line-height: 1.75;
+    color: color-mix(in srgb, var(--ink) 92%, transparent);
+  }
+  .prose :global(p) {
+    margin: 0 0 1.4rem;
+  }
+  /* Subtle lead-in: the opening paragraph a shade larger. */
+  .prose :global(> p:first-of-type) {
+    font-size: 1.22rem;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+  .prose :global(h2) {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.5rem, 3.2vw, 2rem);
+    color: var(--ink);
+    margin: 2.5rem 0 0.9rem;
+  }
+  .prose :global(h3) {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.35rem;
+    color: var(--ink);
+    margin: 2rem 0 0.75rem;
+  }
+  .prose :global(strong) {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .prose :global(ul) {
+    margin: 0 0 1.4rem;
+    padding-left: 1.1rem;
+  }
+  .prose :global(li) {
+    margin: 0 0 0.7rem;
+    padding-left: 0.35rem;
+  }
+  .prose :global(li)::marker {
+    color: var(--gold-deep);
+  }
+  .prose :global(a) {
+    color: var(--gold-deep);
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  }
+  .prose :global(em) { font-style: italic; }
+
+  /* A thin gold divider inside the body (e.g. before a Sources line). */
+  .prose :global(hr) {
+    border: 0;
+    height: 1px;
+    background: color-mix(in srgb, var(--gold) 35%, transparent);
+    margin: 2.25rem 0;
+  }
+
+  /* Inline centred figure (e.g. a portrait photo). */
+  .prose :global(.figure-inline) {
+    margin: 2rem auto;
+    max-width: 460px;
+    text-align: center;
+  }
+  .prose :global(.figure-inline img) {
+    border-radius: 3px;
+    border: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
+  }
+
+  /* Photo gallery (e.g. the four China sightings in "Robots Are Next"). */
+  .prose :global(.gallery) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+    margin: 2rem 0 2.25rem;
+  }
+  .prose :global(.gallery figure) { margin: 0; }
+  .prose :global(.gallery img) {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 3px;
+    border: 1px solid color-mix(in srgb, var(--gold) 25%, transparent);
+  }
+  .prose :global(.gallery figcaption) {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  /* --- End: source link --- */
+  .end-rule {
+    margin: clamp(2.5rem, 6vw, 3.5rem) 0 1.75rem;
+  }
+  .source {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--gold-deep);
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+    padding-bottom: 3px;
+  }
+  .source .arrow { transition: transform 0.2s ease; }
+  .source:hover .arrow { transform: translateX(4px); }
+
+  /* Mobile: single-column gallery, tighter rhythm. */
+  @media (max-width: 560px) {
+    .prose :global(.gallery) {
+      grid-template-columns: 1fr;
+    }
+    .prose { font-size: 1.06rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .source .arrow { transition: none; }
+  }
+</style>

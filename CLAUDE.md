@@ -34,7 +34,7 @@ Logo: use the owner's **original gold compass logo** placed in `/public` — do 
 2. **About** — "Who we are" (one bold lede + two short paragraphs) and "Why work with us".
 3. **Partners** — George Kovoor (Founding Partner) and Neena Kovoor (Partner): photo, 3–4 line bio, email, LinkedIn.
 4. **Clients** — named clients only, no project details: Apax, Diageo, Arthur D. Little, Beyond Snack, Canadian Crystalline, AlgoSynth. Render as a refined name wall with gold hairline separators.
-5. **Articles** — list built from Markdown files; each = title, date, short excerpt, link out to LinkedIn.
+5. **Articles** — an index built from Markdown files, plus a full on-site page per article. Index cards show title, date and excerpt (newest first). George's own pieces open as full editorial pages at `/articles/<slug>` (`src/pages/articles/[slug].astro`); each ends with an "Originally published on LinkedIn →" link. Third-party coverage is marked `type: "mention"` and stays excerpt-only, linking out to the source instead. Article body is plain Markdown in the file; an optional `heroImage` (+ `heroAlt`, `heroCaption`) frontmatter field adds a lead image. Images live in `/public/articles/` and are referenced by path. Slugs are the filename minus the leading `YYYY-MM-DD-` date.
 6. **Ask GeKo** — the AI assistant (below) plus a "go further" path that emails george@askgeko.com.
 7. **Footer** (every page) — social links (X & Instagram @askgeko, LinkedIn), contact email, © Ask GeKo Advisory LLP, askgeko.com.
 
@@ -54,7 +54,7 @@ A premium "Research" section selling proprietary data (RAG over datasets), payme
 2. Build the Home hero.
 3. **Deploy early:** push to GitHub, connect Netlify, confirm the live URL works — before building more pages.
 4. About, Partners, Clients pages.
-5. Articles from Markdown.
+5. Articles from Markdown — full on-site pages via a content collection and `/articles/[slug]` route; images in `/public/articles/`.
 6. Ask GeKo: chat UI + Netlify Function → OpenRouter (env vars); test locally with `netlify dev`.
 7. Contact-to-email via Netlify Forms; wire the assistant's "go further" handoff.
 8. Polish: page titles / meta descriptions, favicon from the logo, transparent logo for dark sections, mobile, accessibility.
