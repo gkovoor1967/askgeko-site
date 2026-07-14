@@ -60,5 +60,29 @@ A premium "Research" section selling proprietary data (RAG over datasets), payme
 8. Polish: page titles / meta descriptions, favicon from the logo, transparent logo for dark sections, mobile, accessibility.
 9. Point GoDaddy DNS to Netlify; set env vars in the Netlify dashboard; generate a QR code linking to `/ask`.
 
+## Verifying UI / responsive changes (standard procedure)
+Before committing any layout, mobile, or responsive fix, verify it in a real
+browser via the Chrome DevTools Protocol (CDP) — not by eyeballing the code.
+Use a **true device viewport**, not `--window-size` (that gave a 512px CSS
+viewport at DPR mismatch and produced misleading, clipped screenshots).
+
+1. Start the dev server: `npm run dev` (serves on `http://localhost:4321`).
+2. Launch headless Chrome with remote debugging:
+   `chrome.exe --headless --disable-gpu --remote-debugging-port=9222 <url>`
+   (Chrome is at `/c/Program Files/Google/Chrome/Application/chrome.exe`).
+3. Connect over the WebSocket from `http://localhost:9222/json/list` (Node 20+
+   has a global `WebSocket`; no dependency needed) and drive CDP:
+   - `Emulation.setDeviceMetricsOverride` with `{ width, height,
+     deviceScaleFactor: 2, mobile: true }` for each width (test **375 and
+     390** for phones).
+   - `Runtime.evaluate` to measure layout — e.g. `document.documentElement
+     .scrollWidth - clientWidth` for horizontal overflow (must be 0), and
+     `getBoundingClientRect().top` on each nav link to confirm they share one
+     row.
+   - `Page.captureScreenshot` to save PNGs, then Read them to check visually.
+4. Verify every shared-component change on **all** affected page types (the
+   header/footer appear on home, /articles, and article slugs).
+Keep the throwaway CDP script in the scratchpad dir, not the repo.
+
 ## Working style
 One task per session. Show diffs and explain briefly. Commit to git after each working step. Prefer Astro components and plain CSS using the tokens above; avoid heavy dependencies.
