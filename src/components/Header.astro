@@ -102,4 +102,25 @@ const nav = [
     letter-spacing: 0.01em;
     color: var(--ink);
   }
+
+  /* --- Phone widths ---------------------------------------------------------
+     At ~375–390px the brand takes its own row and the nav drops below it.
+     Tighten the tracking, type size and gaps so all five links stay on that
+     one row (no second row, no hamburger). Spreading them across the full
+     width keeps the spacing even and in keeping with the restrained look. */
+  @media (max-width: 560px) {
+    .site-nav {
+      width: 100%;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      gap: 0.35rem;
+    }
+
+    .nav-link {
+      font-size: 0.66rem;
+      letter-spacing: 0.06em;
+      /* keep each label on its own single line */
+      white-space: nowrap;
+    }
+  }
 </style>

@@ -136,6 +136,21 @@
     input.style.height = Math.min(input.scrollHeight, 120) + 'px';
   }
   input.addEventListener('input', autoresize);
+
+  // Shorten the placeholder on narrow screens. A textarea placeholder wraps
+  // across lines (unlike <input>), so the long copy gets clipped mid-line in
+  // the single-row box on a phone — swap in a short one that fits.
+  const narrow = window.matchMedia('(max-width: 560px)');
+  function setPlaceholder() {
+    input.setAttribute(
+      'placeholder',
+      narrow.matches
+        ? 'Ask me anything…'
+        : 'Ask about leadership, strategy, or how we work…'
+    );
+  }
+  setPlaceholder();
+  narrow.addEventListener('change', setPlaceholder);
 </script>
 
 <style>
