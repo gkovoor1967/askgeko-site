@@ -28,6 +28,10 @@ import AskGeKoChat from '../components/AskGeKoChat.astro';
 
     <div class="chat-block">
       <AskGeKoChat />
+      <!-- Quiet secondary path: a voice callback via /callback. -->
+      <a class="callback-link" href="/callback">
+        Have GeKo call you <span aria-hidden="true" class="arrow">→</span>
+      </a>
     </div>
   </section>
 </Base>
@@ -107,8 +111,46 @@ import AskGeKoChat from '../components/AskGeKoChat.astro';
   .chat-block {
     width: 100%;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
     margin-top: auto;
+  }
+
+  /* Unobtrusive secondary CTA under the chat: a thin gold-hairline text link
+     to the voice-callback page, consistent with the site's other cue links. */
+  .callback-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: clamp(0.9rem, 2vh, 1.3rem);
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--mute-dark);
+    border-bottom: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+    padding-bottom: 3px;
+    transition: color 0.2s ease;
+  }
+
+  .callback-link:hover,
+  .callback-link:focus-visible {
+    color: var(--gold);
+  }
+
+  .callback-link .arrow {
+    transition: transform 0.2s ease;
+  }
+
+  .callback-link:hover .arrow,
+  .callback-link:focus-visible .arrow {
+    transform: translateX(3px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .callback-link .arrow {
+      transition: none;
+    }
   }
 
   @keyframes rise {
@@ -125,6 +167,29 @@ import AskGeKoChat from '../components/AskGeKoChat.astro';
   @media (prefers-reduced-motion: reduce) {
     .brand-block {
       animation: none;
+    }
+  }
+
+  /* Short viewports (e.g. iPhone SE, 667px tall): tighten the brand block so
+     the chat panel, caption AND the callback link all stay within the single
+     no-scroll screen — the layout uses overflow:hidden, so anything that
+     doesn't fit would be silently clipped. */
+  @media (max-height: 720px) {
+    .brand-block {
+      margin-top: clamp(0.25rem, 2vh, 1.25rem);
+    }
+    .hero-mark {
+      width: clamp(90px, 13vh, 118px);
+      margin-bottom: 1rem;
+    }
+    .hero-rule {
+      margin: 1rem auto;
+    }
+    .positioning {
+      font-size: 1rem;
+    }
+    .callback-link {
+      margin-top: 0.7rem;
     }
   }
 </style>

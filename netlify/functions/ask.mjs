@@ -21,6 +21,62 @@ const MAX_MESSAGES = 20; // most recent turns we forward upstream
 const MAX_CHARS = 4000; // per-message content cap
 const MAX_TOKENS = 600; // cap the reply length
 
+// --- Origin allow-list ---------------------------------------------------
+// The chat endpoint only serves the Ask GeKo site itself: production and
+// localhost (netlify dev). This stops other sites/scripts pointing their
+// widgets at our function and burning the OpenRouter budget.
+const ALLOWED_HOSTS = new Set(['askgeko.com', 'www.askgeko.com', 'localhost', '127.0.0.1']);
+
+function hostOf(url) {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+}
+
+// A browser fetch sends an Origin header on POST; fall back to Referer, and
+// finally allow only the local dev host when neither is present (so curl-based
+// `netlify dev` testing works while production stays closed to header-less
+// callers).
+function originAllowed(req) {
+  const origin = req.headers.get('origin');
+  if (origin) return ALLOWED_HOSTS.has(hostOf(origin));
+  const referer = req.headers.get('referer');
+  if (referer) return ALLOWED_HOSTS.has(hostOf(referer));
+  const host = (req.headers.get('host') || '').split(':')[0];
+  return host === 'localhost' || host === '127.0.0.1';
+}
+
+// --- Rate limit ----------------------------------------------------------
+// Same lightweight pattern as the callback function: a per-IP sliding window.
+// NB: in-memory, so it is per function instance and resets on cold start — an
+// abuse guard, not a hard quota. Swap to Netlify Blobs for a persistent,
+// cross-instance limit.
+const RATE_LIMIT = 20; // messages per window per visitor
+const RATE_WINDOW_MS = 60 * 1000; // one minute
+const hits = new Map(); // ip -> [timestamps]
+
+function allow(ip) {
+  const now = Date.now();
+  const recent = (hits.get(ip) || []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (recent.length >= RATE_LIMIT) {
+    hits.set(ip, recent);
+    return false;
+  }
+  recent.push(now);
+  hits.set(ip, recent);
+  return true;
+}
+
+function clientIp(req) {
+  return (
+    req.headers.get('x-nf-client-connection-ip') ||
+    (req.headers.get('x-forwarded-for') || '').split(',')[0].trim() ||
+    'unknown'
+  );
+}
+
 // --- System prompt -------------------------------------------------------
 // Loaded from askgeko-assistant.md so the owner can edit one file. Read once
 // per cold start; if it can't be found we fall back to a minimal prompt so the
@@ -50,6 +106,19 @@ const SYSTEM_PROMPT = loadSystemPrompt();
 export default async (req) => {
   if (req.method !== 'POST') {
     return json({ error: 'Method not allowed.' }, 405);
+  }
+
+  // Only serve the Ask GeKo site (production + localhost).
+  if (!originAllowed(req)) {
+    return json({ error: 'This endpoint only serves the Ask GeKo website.' }, 403);
+  }
+
+  // Cheaply turn away hammering before doing any work upstream.
+  if (!allow(clientIp(req))) {
+    return json(
+      { error: "You're sending messages a little too quickly. Please pause a moment and try again." },
+      429
+    );
   }
 
   const key = process.env.OPENROUTER_API_KEY;
