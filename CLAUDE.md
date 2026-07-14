@@ -45,6 +45,7 @@ Copy lives in `askgeko-content.md` — use it; do not invent firm facts. Keep al
 - OpenRouter is OpenAI-compatible: base URL `https://openrouter.ai/api/v1`, send the model slug from the env var. The function sends the system prompt from `askgeko-assistant.md` plus the running conversation. Keep replies concise.
 - To switch models or add a "cheap model first, escalate if needed" rule later, change the env var or add a small routing rule **in the function** — never hard-code the model.
 - When a visitor wants real help, collect name / email / question and email it to george@askgeko.com (reuse the Netlify Forms setup).
+- Each successful Q&A is logged to Netlify Blobs (store `chat-logs`, fail-open, no IPs); export it to a local CSV with `scripts/read-chat-logs.mjs`.
 
 ## Out of scope for v1 (leave room, do not build)
 A premium "Research" section selling proprietary data (RAG over datasets), payments (Razorpay / Stripe), logins / gating, a Vapi voice agent, YouTube embeds. Structure the site so a Research section and basic auth could be added later without a rebuild. For any future proprietary-data answers: route through a model that does not train on inputs, disable provider retention for those calls, and return summaries — never raw datasets.

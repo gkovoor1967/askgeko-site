@@ -12,6 +12,8 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { getStore } from '@netlify/blobs';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const DEFAULT_MODEL = 'google/gemini-2.5-flash';
@@ -103,6 +105,40 @@ function loadSystemPrompt() {
 
 const SYSTEM_PROMPT = loadSystemPrompt();
 
+// --- Q&A logging (Netlify Blobs) -----------------------------------------
+// Append one entry per successful answer to the "chat-logs" store so George
+// can review what visitors ask. This is best-effort and FAIL-OPEN: any error
+// (or a slow store) is swallowed and never affects the chat reply. We do NOT
+// log IPs or any request metadata — only the opaque sessionId the client
+// sends. Only successful answers reach here; rate-limited / origin-rejected
+// requests return earlier and are never logged.
+const LOG_STORE = 'chat-logs';
+const LOG_TIMEOUT_MS = 2500; // cap so a hung store can never delay the reply
+
+async function logChat({ sessionId, question, response, model }) {
+  try {
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10); // YYYY-MM-DD — groups by day
+    // Key sorts within a day by millisecond timestamp; random suffix avoids
+    // collisions when two answers land in the same millisecond.
+    const key = `${date}/${now.getTime()}-${randomUUID().slice(0, 8)}`;
+    const value = { ts: now.toISOString(), sessionId, question, response, model };
+
+    const store = getStore(LOG_STORE);
+    let timer;
+    await Promise.race([
+      store.setJSON(key, value),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('blob log timeout')), LOG_TIMEOUT_MS);
+      }),
+    ]);
+    clearTimeout(timer);
+  } catch (err) {
+    // Fail-open: log the failure to the function log and move on.
+    console.warn('chat log write failed (non-fatal):', err.message);
+  }
+}
+
 export default async (req) => {
   if (req.method !== 'POST') {
     return json({ error: 'Method not allowed.' }, 405);
@@ -157,6 +193,10 @@ export default async (req) => {
     return json({ error: 'No message to answer.' }, 400);
   }
 
+  // Opaque per-widget session id from the client (never an IP). Coerce to a
+  // short string; default when absent so logging still groups the turn.
+  const sessionId = String(body?.sessionId || 'unknown').slice(0, 100);
+
   const payload = {
     model,
     messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...conversation],
@@ -194,6 +234,17 @@ export default async (req) => {
     console.error('OpenRouter returned no content:', JSON.stringify(data));
     return json({ error: 'The assistant returned an empty reply. Please try again.' }, 502);
   }
+
+  // Log the Q&A (best-effort, fail-open). The question is the visitor's most
+  // recent turn. Awaited so it actually persists before the function suspends,
+  // but bounded by LOG_TIMEOUT_MS so it can never delay the reply noticeably.
+  const lastUser = [...conversation].reverse().find((m) => m.role === 'user');
+  await logChat({
+    sessionId,
+    question: lastUser ? lastUser.content : '',
+    response: reply,
+    model,
+  });
 
   return json({ reply });
 };

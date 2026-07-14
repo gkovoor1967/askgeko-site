@@ -47,6 +47,14 @@
   const messages = [];
   let started = false;
 
+  // A random id for this widget load, sent with each request so the server can
+  // group a visitor's turns in the logs without ever seeing their IP. Opaque;
+  // not stored in the browser and reset on reload. crypto.randomUUID needs a
+  // secure context (https / localhost); fall back just in case.
+  const sessionId =
+    (crypto.randomUUID && crypto.randomUUID()) ||
+    Date.now().toString(36) + Math.random().toString(36).slice(2);
+
   // Render a message. Uses textContent (not innerHTML) so nothing a visitor or
   // the model returns can inject markup.
   function addMessage(cssRole, content) {
@@ -85,7 +93,7 @@
       const res = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages }),
+        body: JSON.stringify({ messages, sessionId }),
       });
       const data = await res.json().catch(() => ({}));
       typing.remove();

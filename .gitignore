@@ -18,6 +18,8 @@ public/.gitignore
 # logs
 *.log
 npm-debug.log*
+# exported chat logs (visitor Q&A — keep out of the repo)
+chat-logs.csv
 # OS / editor
 .DS_Store
 Thumbs.db
