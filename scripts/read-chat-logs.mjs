@@ -12,26 +12,25 @@
 // HOW TO RUN IT
 //
 // A) Against the LIVE site's logs (what you'll normally use).
-//    You use the Netlify dashboard, not `netlify login`, so give the script a
-//    Personal Access Token + the site id via two environment variables:
-//
-//      1. Create a token: Netlify dashboard -> User settings -> Applications
-//         -> "Personal access tokens" -> New access token. Copy it.
-//      2. Find the site id: Site configuration -> General -> "Site ID"
-//         (a UUID like 12345678-90ab-...).
-//      3. Run (PowerShell):
-//           $env:NETLIFY_AUTH_TOKEN = "your-token"
-//           $env:NETLIFY_SITE_ID    = "your-site-id"
+//    The script reads its credentials from the project's `.env` file, so once
+//    that's set up you just run:
 //           node scripts/read-chat-logs.mjs
-//         (bash: NETLIFY_AUTH_TOKEN=... NETLIFY_SITE_ID=... node scripts/...)
 //
-//    The token is a secret — don't paste it into any committed file. Setting
-//    it inline for one command (as above) keeps it out of the repo.
+//    `.env` needs two keys (the same file `netlify dev` already uses):
+//      1. NETLIFY_AUTH_TOKEN — a Personal Access Token. Netlify dashboard ->
+//         User settings -> Applications -> "Personal access tokens" -> New
+//         access token. Copy it.
+//      2. NETLIFY_SITE_ID — Site configuration -> General -> "Site ID"
+//         (a UUID like 12345678-90ab-...).
+//    Add both to `.env` as `NETLIFY_AUTH_TOKEN=...` and `NETLIFY_SITE_ID=...`.
+//    `.env` is gitignored, so the token stays out of the repo. (You can also
+//    set the two variables in your shell instead — a real environment variable
+//    wins over the `.env` file if both are present.)
 //
 // B) Against LOCAL `netlify dev` test logs (no token needed).
 //    `netlify dev` keeps a sandbox blob store on disk under .netlify/. When no
-//    NETLIFY_AUTH_TOKEN is set, this script reads that sandbox directly, so
-//    you can just run:
+//    NETLIFY_AUTH_TOKEN is found (neither in the shell nor in `.env`), this
+//    script reads that sandbox directly, so you can just run:
 //           node scripts/read-chat-logs.mjs
 //    after sending a few test chats through `netlify dev`.
 //
@@ -41,6 +40,26 @@ import { writeFileSync, readdirSync, readFileSync, statSync, existsSync } from '
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getStore } from '@netlify/blobs';
+
+// --- load .env -------------------------------------------------------------
+// So `node scripts/read-chat-logs.mjs` works with no shell setup: pull any
+// keys from the project's `.env` (gitignored) into process.env. A variable
+// that's already set in the real environment is left untouched, so an inline
+// override still wins.
+function loadDotEnv() {
+  const path = new URL('../.env', import.meta.url);
+  let text;
+  try {
+    text = readFileSync(path, 'utf8');
+  } catch {
+    return; // no .env — fine, we may be running against the local sandbox
+  }
+  for (const line of text.split(/\r?\n/)) {
+    const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
+    if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2];
+  }
+}
+loadDotEnv();
 
 const STORE = 'chat-logs';
 const OUT = new URL('../chat-logs.csv', import.meta.url);
