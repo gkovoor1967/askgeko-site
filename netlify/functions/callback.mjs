@@ -25,6 +25,31 @@ import { getStore } from '@netlify/blobs';
 
 const VAPI_URL = 'https://api.vapi.ai/call';
 
+// --- Origin allow-list ---------------------------------------------------
+// Same guard ask.mjs has had since the chat function was built; the callback
+// function was missing it, which is how a script could POST JSON straight at
+// /api/callback without ever loading the form. A determined attacker can of
+// course forge an Origin header, but it costs nothing and turns away the
+// naive bots that simply replay a captured request.
+const ALLOWED_HOSTS = new Set(['askgeko.com', 'www.askgeko.com', 'localhost', '127.0.0.1']);
+
+function hostOf(url) {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+}
+
+function originAllowed(req) {
+  const origin = req.headers.get('origin');
+  if (origin) return ALLOWED_HOSTS.has(hostOf(origin));
+  const referer = req.headers.get('referer');
+  if (referer) return ALLOWED_HOSTS.has(hostOf(referer));
+  const host = (req.headers.get('host') || '').split(':')[0];
+  return host === 'localhost' || host === '127.0.0.1';
+}
+
 // --- Country allowlist ---------------------------------------------------
 // ALLOWED_CALLING_CODES is a comma-separated list of E.164 calling codes we
 // are willing to dial — keep it in step with the Twilio account's geo
@@ -74,13 +99,46 @@ function blockedNanpAreaCodes() {
 // This throws out malformed numbers before we ever hand them to Vapi. The
 // ranges are deliberately a little loose so legitimate landlines still get
 // through; the job is to catch gibberish, not to be a numbering-plan validator.
-const NATIONAL_LENGTH = {
-  91: { min: 10, max: 10, name: 'India' },
-  1: { min: 10, max: 10, name: 'US/Canada' },
-  66: { min: 8, max: 9, name: 'Thailand' },
-  971: { min: 8, max: 9, name: 'UAE' },
-  966: { min: 8, max: 9, name: 'Saudi Arabia' },
-  44: { min: 9, max: 10, name: 'UK' },
+// 13 Sep 2026: the length-only version of this table was breached. The bot
+// dialled +447010830110 and friends — +44 70x is UK *Personal Numbering*
+// ("follow-me"), NOT mobile. It looks like an 07 mobile to the eye, it is
+// 10 digits so it passed the length check, and it is revenue-share, which is
+// exactly what an IRSF operator wants. Seven calls, ~57 billed minutes.
+//
+// So these are ALLOWLISTS, not length ranges: each entry matches the mobile
+// and geographic ranges we actually expect, and anything else in the plan —
+// premium rate, personal numbering, pagers, service numbers — fails closed by
+// simply not being listed. That is the whole point. A blocklist has to
+// enumerate every payout range a fraudster might find; an allowlist only has
+// to enumerate the handful of ranges real clients call from.
+const NATIONAL_FORMAT = {
+  // Mobile 6-9, plus landlines (area code + subscriber = 10 digits). Kept
+  // permissive: this is the home market and not an IRSF payout destination.
+  91: { name: 'India', pattern: /^[1-9]\d{9}$/ },
+
+  // Area code and exchange must both start 2-9. The Caribbean and premium
+  // ranges are then removed separately by DEFAULT_BLOCKED_NANP below.
+  1: { name: 'US/Canada', pattern: /^[2-9]\d{2}[2-9]\d{6}$/ },
+
+  // Mobile 6/8/9 (9 digits); geographic 2-7 (8 digits). Excludes 1900 premium.
+  66: { name: 'Thailand', pattern: /^([689]\d{8}|[2-7]\d{7})$/ },
+
+  // Mobile 50/52/54/55/56/58 (9 digits); geographic 2,3,4,6,9 and RAK 7x
+  // (8 digits). 7 is narrowed to 7[1-9] so the 700 premium range is excluded.
+  971: { name: 'UAE', pattern: /^(5[024568]\d{7}|[23469]\d{7}|7[1-9]\d{6})$/ },
+
+  // Mobile 5 (9 digits); geographic 11-17 (9 digits). Excludes 700 premium.
+  966: { name: 'Saudi Arabia', pattern: /^(5\d{8}|1[1-7]\d{7})$/ },
+
+  // THE 13 Sep BREACH. Mobile is 7[1-5] and 7[7-9] — note the gaps:
+  //   70  = personal numbering (revenue share)  <- what the bot dialled
+  //   76  = pagers, except 7624 (Isle of Man mobile, allowed explicitly)
+  // Also excluded by omission: 08x service/freephone, 09x premium rate, 118
+  // directory enquiries. Geographic 01/02, 03 non-geographic, 055/056 VoIP.
+  44: {
+    name: 'UK',
+    pattern: /^(1\d{8,9}|2\d{9}|3\d{9}|5[56]\d{8}|7624\d{6}|7[1-57-9]\d{8})$/,
+  },
 };
 
 // Longest-prefix match, so "971" wins over a shorter entry that also matches.
@@ -127,11 +185,33 @@ const GUARD_STORE = 'callback-guard';
 const GUARD_TIMEOUT_MS = 2500; // cap so a hung store can never stall a caller
 const PER_PHONE_LIMIT = 2;
 const PER_PHONE_WINDOW_MS = 24 * 60 * 60 * 1000;
-const DEFAULT_HOURLY_CAP = 8;
+// Lowered from 8 to 4 on 14 Sep. The 13 Sep bot placed SEVEN calls in twelve
+// minutes and slipped under the cap of 8 by one. Genuine traffic is a handful
+// of callbacks a week, so 4/hour is still far above any real peak.
+const DEFAULT_HOURLY_CAP = 4;
+// A second, slower ceiling: an attacker who paces himself to 3/hour would
+// otherwise run all day unnoticed.
+const DEFAULT_DAILY_CAP = 10;
+const DEFAULT_MAX_CALL_SECONDS = 420; // 7 min; Vapi's own default is 600
 
 function hourlyCap() {
   const n = Number.parseInt(process.env.CALLBACK_HOURLY_CAP || '', 10);
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_HOURLY_CAP;
+}
+
+// Ceiling on a single call's billed length, in seconds. Vapi defaults to 600.
+function maxCallSeconds() {
+  const n = Number.parseInt(process.env.CALLBACK_MAX_CALL_SECONDS || '', 10);
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_MAX_CALL_SECONDS;
+}
+
+function dailyCap() {
+  const n = Number.parseInt(process.env.CALLBACK_DAILY_CAP || '', 10);
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_DAILY_CAP;
+}
+
+function dayKey(now) {
+  return `daily/${now.toISOString().slice(0, 10)}`; // daily/YYYY-MM-DD
 }
 
 function hourKey(now) {
@@ -160,24 +240,27 @@ async function checkPersistentLimits(phone, now) {
   try {
     const store = getStore(GUARD_STORE);
     const phoneKey = `phone/${phone.replace(/^\+/, '')}`;
-    const [phoneRec, hourRec] = await withTimeout(
+    const [phoneRec, hourRec, dayRec] = await withTimeout(
       Promise.all([
         store.get(phoneKey, { type: 'json' }),
         store.get(hourKey(now), { type: 'json' }),
+        store.get(dayKey(now), { type: 'json' }),
       ]),
       'guard read'
     );
 
     const recent = (phoneRec?.hits || []).filter((t) => now.getTime() - t < PER_PHONE_WINDOW_MS);
-    if (recent.length >= PER_PHONE_LIMIT) return { ok: false, scope: 'phone', recent };
-
     const count = hourRec?.count || 0;
-    if (count >= hourlyCap()) return { ok: false, scope: 'global', recent, count };
+    const dayCount = dayRec?.count || 0;
+    if (recent.length >= PER_PHONE_LIMIT)
+      return { ok: false, scope: 'phone', recent, count, dayCount };
+    if (count >= hourlyCap()) return { ok: false, scope: 'hour', recent, count, dayCount };
+    if (dayCount >= dailyCap()) return { ok: false, scope: 'day', recent, count, dayCount };
 
-    return { ok: true, recent, count };
+    return { ok: true, recent, count, dayCount };
   } catch (err) {
     console.warn('callback guard read failed (fail-open, non-fatal):', err.message);
-    return { ok: true, degraded: true, recent: [], count: 0 };
+    return { ok: true, degraded: true, recent: [], count: 0, dayCount: 0 };
   }
 }
 
@@ -193,6 +276,7 @@ async function commitPersistentLimits(phone, now, state) {
       Promise.all([
         store.setJSON(phoneKey, { hits: [...state.recent, now.getTime()] }),
         store.setJSON(hourKey(now), { count: (state.count || 0) + 1 }),
+        store.setJSON(dayKey(now), { count: (state.dayCount || 0) + 1 }),
       ]),
       'guard write'
     );
@@ -267,6 +351,15 @@ export default async (req) => {
 
   const ip = clientIp(req);
 
+  // Only serve the Ask GeKo site itself.
+  if (!originAllowed(req)) {
+    console.warn(
+      `REJECTED: origin — origin=${req.headers.get('origin') || '-'} ` +
+        `referer=${req.headers.get('referer') || '-'} ip=${ip}`
+    );
+    return json({ error: 'This endpoint only serves the Ask GeKo website.' }, 400);
+  }
+
   let body;
   try {
     body = await req.json();
@@ -296,6 +389,15 @@ export default async (req) => {
   const company = String(body.company || '').trim().slice(0, 100);
   const question = String(body.question || '').trim().slice(0, 500);
   if (!name) return json({ error: 'Please tell us your name.' }, 400);
+  // The form marks Company required but the function never checked it, so a
+  // script POSTing raw JSON could skip it — and every one of the 13 Sep fraud
+  // leads landed in Zoho with Company blank. Enforcing the form's own contract
+  // server-side costs a real visitor nothing.
+  if (!company) {
+    const submitted = `${body.countrycode || ''}${body.phone || ''}`.slice(0, 24);
+    console.warn(`REJECTED: fields — company missing phone=${submitted} ip=${ip}`);
+    return json({ error: 'Please tell us your company.' }, 400);
+  }
 
   const phone = normalizePhone(body.countrycode, body.phone);
   if (!E164.test(phone)) {
@@ -316,15 +418,18 @@ export default async (req) => {
     return json({ error: GEO_REFUSAL }, 400);
   }
 
-  // --- Per-country length sanity -----------------------------------------
+  // --- Per-country range allowlist ---------------------------------------
+  // Not a length check: the number must land in a range we actually expect a
+  // client to call from. Premium, personal-numbering and pager ranges fail
+  // closed because they are absent from the pattern.
   const national = digits.slice(code.length);
-  const rule = NATIONAL_LENGTH[code];
-  if (rule && (national.length < rule.min || national.length > rule.max)) {
+  const rule = NATIONAL_FORMAT[code];
+  if (rule && !rule.pattern.test(national)) {
     console.warn(
-      `REJECTED: format — phone=${phone} wrong length for +${code} (${rule.name}): ` +
-        `got ${national.length}, expected ${rule.min}-${rule.max} ip=${ip}`
+      `REJECTED: country — phone=${phone} not a dialable range for +${code} ` +
+        `(${rule.name}) name=${JSON.stringify(name)} ip=${ip}`
     );
-    return json({ error: BAD_NUMBER }, 400);
+    return json({ error: GEO_REFUSAL }, 400);
   }
   // Catch obvious filler such as +91 1111111111.
   if (/^(\d)\1+$/.test(national)) {
@@ -332,16 +437,11 @@ export default async (req) => {
     return json({ error: BAD_NUMBER }, 400);
   }
 
-  // --- NANP: area-code shape, then the blocklist -------------------------
+  // --- NANP area-code blocklist ------------------------------------------
+  // Area/exchange shape is already enforced by NATIONAL_FORMAT[1]; what is
+  // left is the set of +1 destinations Twilio bills as separate countries.
   if (code === '1') {
     const area = national.slice(0, 3);
-    const exchange = national.slice(3, 6);
-    // In the NANP both the area code and the exchange must start 2-9, so this
-    // throws out fabricated numbers like +1 123 456 7890 for free.
-    if (!/^[2-9]\d\d$/.test(area) || !/^[2-9]\d\d$/.test(exchange)) {
-      console.warn(`REJECTED: format — phone=${phone} invalid NANP area/exchange ip=${ip}`);
-      return json({ error: BAD_NUMBER }, 400);
-    }
     if (blockedNanpAreaCodes().has(area)) {
       console.warn(
         `REJECTED: country — phone=${phone} blocked NANP area=${area} ` +
@@ -373,12 +473,22 @@ export default async (req) => {
         429
       );
     }
+    if (limits.scope === 'hour') {
+      console.warn(
+        `REJECTED: rate — scope=hour count=${limits.count}/${hourlyCap()} this hour ` +
+          `phone=${phone} ip=${ip}`
+      );
+      return json(
+        { error: "We're at our callback limit for this hour. Please try again shortly, or email george@askgeko.com." },
+        429
+      );
+    }
     console.warn(
-      `REJECTED: rate — scope=global count=${limits.count}/${hourlyCap()} this hour ` +
+      `REJECTED: rate — scope=day count=${limits.dayCount}/${dailyCap()} today ` +
         `phone=${phone} ip=${ip}`
     );
     return json(
-      { error: "We're at our callback limit for this hour. Please try again shortly, or email george@askgeko.com." },
+      { error: "We're at our callback limit for today. Please email george@askgeko.com and we'll come straight back to you." },
       429
     );
   }
@@ -401,6 +511,13 @@ export default async (req) => {
         assistantId,
         customer: { number: phone, name: name || undefined },
         assistantOverrides: {
+          // Hard ceiling on a single call. Without this Vapi applies its own
+          // 600s default, which is why the 13 Sep fraud calls all show up in
+          // Twilio at 10m 0s / 10m 1s / 10m 7s — the bot answered, played a
+          // YouTube motivational clip down the line, and let the meter run to
+          // the cap, because IRSF revenue share is paid per minute. A real
+          // intake call runs 2-3 minutes; this bounds the damage per call.
+          maxDurationSeconds: maxCallSeconds(),
           variableValues: {
             name,
             question: question || "what you're working on",
