@@ -518,6 +518,19 @@ export default async (req) => {
           // the cap, because IRSF revenue share is paid per minute. A real
           // intake call runs 2-3 minutes; this bounds the damage per call.
           maxDurationSeconds: maxCallSeconds(),
+          // Subscribe to the live events the monologue guard in
+          // vapi-webhook.mjs needs. end-of-call-report MUST stay in this list:
+          // overriding serverMessages replaces the assistant's dashboard
+          // setting for this call, and dropping it would silently kill Zoho
+          // lead creation. Raw `transcript` is deliberately left out — it
+          // fires per partial and would multiply webhook invocations for no
+          // extra signal, since conversation-update already commits turns.
+          serverMessages: [
+            'end-of-call-report',
+            'conversation-update',
+            'speech-update',
+            'status-update',
+          ],
           variableValues: {
             name,
             question: question || "what you're working on",

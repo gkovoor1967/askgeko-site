@@ -13,8 +13,120 @@
 // Resilience: if Zoho fails we log clearly but still return 200 so Vapi does
 // NOT retry — the callback is already captured by Netlify Forms as a fallback.
 
+import { getStore } from '@netlify/blobs';
+
 const ZOHO_TOKEN_URL = 'https://accounts.zoho.in/oauth/v2/token';
 const ZOHO_LEADS_URL = 'https://www.zohoapis.in/crm/v8/Leads';
+
+// --- Monologue guard -----------------------------------------------------
+// The 13 Sep fraud calls were not conversations. The far end answered and
+// played a YouTube motivational clip down the line for ten solid minutes; our
+// assistant got "Hello, am I speaking with..." out and was then talked over
+// until Vapi's own duration cap ended the call. IRSF pays per minute, so the
+// monologue WAS the product.
+//
+// A silence timeout cannot catch this — the line was never silent, it was
+// wall-to-wall audio. What is actually anomalous is the reverse: OUR side
+// never got a turn. So we track how long it has been since the assistant last
+// spoke, and hang up from our side once that passes the threshold.
+//
+// This also catches the honest versions of the same shape: voicemail
+// greetings, hold music, and IVR trees that talk at us forever.
+const CALL_GUARD_STORE = 'call-guard';
+const DEFAULT_MONOLOGUE_TIMEOUT_S = 90;
+const GUARD_TIMEOUT_MS = 2000; // never let the guard delay our 200 to Vapi
+
+function monologueTimeoutMs() {
+  const n = Number.parseInt(process.env.CALL_MONOLOGUE_TIMEOUT_SECONDS || '', 10);
+  return (Number.isFinite(n) && n > 0 ? n : DEFAULT_MONOLOGUE_TIMEOUT_S) * 1000;
+}
+
+async function withTimeout(promise, label) {
+  let timer;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timeout`)), GUARD_TIMEOUT_MS);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Did OUR side speak in this event? Vapi labels the assistant "assistant" in
+// speech-update and transcript, but "bot" inside conversation-update's message
+// list, so accept both rather than trusting one spelling.
+function assistantSpokeIn(message) {
+  const isOurs = (role) => role === 'assistant' || role === 'bot';
+  if (message.type === 'speech-update' || message.type === 'transcript') {
+    return isOurs(message.role);
+  }
+  if (message.type === 'conversation-update') {
+    const msgs = message.messages || message.artifact?.messages || [];
+    const last = msgs.filter((m) => m && m.role !== 'system').pop();
+    return last ? isOurs(last.role) : false;
+  }
+  return false;
+}
+
+async function endLiveCall(controlUrl, callId, idleSec) {
+  await fetch(controlUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'end-call' }),
+  });
+  console.warn(
+    `ENDED: monologue — callId=${callId} assistant had no turn for ${idleSec}s ` +
+      `(limit ${monologueTimeoutMs() / 1000}s); hung up from our side`
+  );
+}
+
+// Best-effort and FAIL-OPEN, like every other guard on this path: if Blobs or
+// the control URL misbehaves we log and let the call run, because
+// maxDurationSeconds on the dial side is still the backstop.
+async function monologueGuard(message) {
+  try {
+    const call = message.call || {};
+    const callId = call.id || message.callId;
+    const controlUrl = call.monitor?.controlUrl || message.monitor?.controlUrl;
+    if (!callId || !controlUrl) return;
+
+    const store = getStore(CALL_GUARD_STORE);
+    const key = `call/${callId}`;
+    const now = Date.now();
+
+    const rec = (await withTimeout(store.get(key, { type: 'json' }), 'guard read')) || null;
+    if (rec?.ended) return; // already hung up; don't spam the control URL
+
+    // The first event we see starts the clock. If the assistant never gets a
+    // turn at all, that is precisely the case we want to catch.
+    if (!rec || assistantSpokeIn(message)) {
+      await withTimeout(store.setJSON(key, { lastAssistant: now }), 'guard write');
+      return;
+    }
+
+    const idleMs = now - (rec.lastAssistant || now);
+    if (idleMs >= monologueTimeoutMs()) {
+      await endLiveCall(controlUrl, callId, Math.round(idleMs / 1000));
+      await withTimeout(store.setJSON(key, { ...rec, ended: true }), 'guard write');
+    }
+  } catch (err) {
+    console.warn('monologue guard failed (fail-open, non-fatal):', err.message);
+  }
+}
+
+// Drop the per-call record once the call is over, so the store does not grow.
+async function clearCallGuard(message) {
+  try {
+    const callId = message.call?.id || message.callId;
+    if (!callId) return;
+    await withTimeout(getStore(CALL_GUARD_STORE).delete(`call/${callId}`), 'guard delete');
+  } catch {
+    /* housekeeping only */
+  }
+}
 
 // Zoho's Description field is generous but not unlimited; keep well under it.
 const DESCRIPTION_MAX = 30000;
@@ -119,10 +231,21 @@ export default async (req) => {
   }
   const message = body.message || body;
 
-  // 3) Only act on end-of-call-report; acknowledge everything else with 200.
+  // 3) Live-call events: run the monologue guard, then acknowledge. These
+  //    arrive repeatedly while a call is in progress, which is what gives the
+  //    guard a heartbeat to evaluate on even when our side never gets a turn.
+  const LIVE_TYPES = new Set(['speech-update', 'transcript', 'conversation-update']);
+  if (LIVE_TYPES.has(message.type)) {
+    await monologueGuard(message);
+    return json({ ok: true, ignored: message.type });
+  }
+
+  // 4) Only act on end-of-call-report; acknowledge everything else with 200.
   if (message.type !== 'end-of-call-report') {
     return json({ ok: true, ignored: message.type || 'unknown' });
   }
+
+  await clearCallGuard(message);
 
   const data = extractCallData(message);
   console.log(
@@ -131,7 +254,7 @@ export default async (req) => {
       `duration=${data.durationSec ?? 'n/a'}s`
   );
 
-  // 4) Create the Zoho Lead. Any failure here is logged but still returns 200
+  // 5) Create the Zoho Lead. Any failure here is logged but still returns 200
   //    so Vapi does not retry (Netlify Forms already captured the request).
   try {
     const accessToken = await getZohoAccessToken();
